@@ -22,7 +22,7 @@ if (process.pkg && process.platform === 'win32') {
   clipboardy.readSync = () => {
     const result = child_process.spawnSync(clipboardExe, ['--paste'], { encoding: 'utf8' });
     if (result.status !== 0) throw new Error('Error leyendo portapapeles');
-    return result.stdout.trim();
+    return result.stdout;
   };
 
   clipboardy.writeSync = (text) => {
@@ -91,6 +91,8 @@ Clipboard Sync Script – Firebase + Local Clipboard
   let lastClipboard = '';
   let lastRemote = '';
 
+  let previousError = false;
+
   async function uploadClipboardIfChanged() {
     try {
       const current = clipboardy.readSync();
@@ -104,9 +106,13 @@ Clipboard Sync Script – Firebase + Local Clipboard
         timestamp: Date.now()
       });
       console.log('[↑] Subido a Firebase.');
+      previousError = false
     } catch (err) {
       if (err.message && err.message.includes('Could not paste from clipboard')) return;
+      console.log("aqui")
+      if(previousError) return;
       console.error('❌ Error al subir:', err.message);
+      previousError = true;
     }
   }
 
