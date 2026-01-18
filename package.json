@@ -6,20 +6,21 @@
   "bin": "script.js",
   "author": "",
   "license": "ISC",
-  "scripts": {"package": "pkg ."},
+  "scripts": {
+    "package": "pkg ."
+  },
   "dependencies": {
     "firebase": "^9.22.2",
     "readline-sync": "^1.4.10",
     "clipboardy": "^2.3.0"
   },
-"pkg": {
-  "assets": [
-    "libs/clipboard_x86_64.exe"
-  ],
-  "targets": [
-    "node16-win-x64"
-  ]
-}
-
-
+  "pkg": {
+    "assets": [
+      "libs/clipboard_x86_64.exe"
+    ],
+    "targets": [
+      "node16-win-x64",
+      "node16-macos-x64"
+    ]
+  }
 }

@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-if (process.pkg) {
-  // Forzar la ruta al exe dentro de la carpeta 'libs'
+if (process.pkg && process.platform === 'win32') {
+  // Forzar la ruta al exe dentro de la carpeta 'libs' solo en Windows
   process.env.CLIPBOARDY_BINARY_PATH = path.join(path.dirname(process.execPath), 'libs', 'clipboard_x86_64.exe');
   if (!fs.existsSync(process.env.CLIPBOARDY_BINARY_PATH)) {
     console.error('❌ No se encontró clipboard_x86_64.exe en:', process.env.CLIPBOARDY_BINARY_PATH);
@@ -60,28 +60,23 @@ async function main() {
 Clipboard Sync Script – Firebase + Local Clipboard
 
 ✔️ Sincroniza el portapapeles local con Firestore.
-📦 Requiere: libs/clipboard_x86_64.exe junto al .exe empaquetado.
-`);
+📦 Requiere: libs/clipboard_x86_64.exe junto al .exe empaquetado (solo en Windows).
+`); // Nota: macOS no requiere binario externo.
     process.exit(0);
   }
 
   const userId = getUserId();
 
   const { initializeApp } = require('firebase/app');
-  const {
-    getFirestore,
-    doc,
-    setDoc,
-    onSnapshot,
-  } = require('firebase/firestore');
+  const { getFirestore, doc, setDoc, onSnapshot } = require('firebase/firestore');
 
   const firebaseConfig = {
-    apiKey: "AIzaSyA3ZU5UZIVs-wyNIvTNwV3sOZCMIAbaoK0",
-    authDomain: "test-clipboard-83860.firebaseapp.com",
-    projectId: "test-clipboard-83860",
-    storageBucket: "test-clipboard-83860.appspot.com",
-    messagingSenderId: "650219244745",
-    appId: "1:650219244745:web:8d3403935c531fbf509118",
+    apiKey: 'AIzaSyA3ZU5UZIVs-wyNIvTNwV3sOZCMIAbaoK0',
+    authDomain: 'test-clipboard-83860.firebaseapp.com',
+    projectId: 'test-clipboard-83860',
+    storageBucket: 'test-clipboard-83860.appspot.com',
+    messagingSenderId: '650219244745',
+    appId: '1:650219244745:web:8d3403935c531fbf509118',
   };
 
   const appFirebase = initializeApp(firebaseConfig);
@@ -103,14 +98,13 @@ Clipboard Sync Script – Firebase + Local Clipboard
       await setDoc(docRef, {
         content: current,
         machineId: machineId,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       console.log('[↑] Subido a Firebase.');
-      previousError = false
+      previousError = false;
     } catch (err) {
       if (err.message && err.message.includes('Could not paste from clipboard')) return;
-      console.log("aqui")
-      if(previousError) return;
+      if (previousError) return;
       console.error('❌ Error al subir:', err.message);
       previousError = true;
     }
@@ -122,11 +116,7 @@ Clipboard Sync Script – Firebase + Local Clipboard
       const data = snapshot.data();
       const remoteContent = data.content;
 
-      if (
-        typeof remoteContent === 'string' &&
-        remoteContent !== lastClipboard &&
-        remoteContent !== lastRemote
-      ) {
+      if (typeof remoteContent === 'string' && remoteContent !== lastClipboard && remoteContent !== lastRemote) {
         lastRemote = remoteContent;
         try {
           clipboardy.writeSync(remoteContent);
