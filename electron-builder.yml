@@ -1,0 +1,21 @@
+appId: com.alejandroppir.clipboard-sync
+productName: Clipboard Sync
+directories:
+  output: dist-release
+files:
+  - dist/main/**
+  - dist/preload/**
+  - dist/renderer/**
+  - assets/logo.ico
+win:
+  target:
+    - target: portable
+      arch: x64
+  icon: assets/logo.ico
+  signAndEditExecutable: false
+portable:
+  artifactName: ClipboardSync.exe
+publish:
+  provider: github
+  owner: alejandroppir
+  repo: clipboard-sync

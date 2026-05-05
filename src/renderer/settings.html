@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- CSP: sin inline scripts, sin eval, sin remote resources -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'" />
+    <title>Clipboard Sync</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div class="status-bar">
+      <span id="status-indicator" class="status-dot stopped"></span>
+      <span id="status-text">Detenido</span>
+      <span class="spacer"></span>
+      <span id="user-id-label" class="user-id">—</span>
+      <button id="btn-change-user" class="btn btn-secondary">Cambiar</button>
+    </div>
+
+    <div class="log-container">
+      <textarea id="log-box" readonly spellcheck="false"></textarea>
+    </div>
+
+    <div class="action-bar">
+      <button id="btn-quit" class="btn btn-danger">Cerrar aplicación</button>
+      <button id="btn-minimize" class="btn btn-secondary">Minimizar a la barra de tareas</button>
+      <span class="spacer"></span>
+      <button id="btn-stop" class="btn btn-secondary">Detener</button>
+      <button id="btn-restart" class="btn btn-accent">Reiniciar</button>
+    </div>
+
+    <!-- Diálogo userId -->
+    <div id="userid-dialog" class="dialog-overlay hidden">
+      <div class="dialog">
+        <label for="userid-input">ID de usuario (email)</label>
+        <input id="userid-input" type="text" placeholder="email@dominio.com" autocomplete="off" spellcheck="false" />
+        <div class="dialog-actions">
+          <button id="dialog-cancel" class="btn btn-secondary">Cancelar</button>
+          <button id="dialog-ok" class="btn btn-accent">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
