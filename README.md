@@ -1,72 +1,211 @@
 # Clipboard Sync
 
-Sincronizador de portapapeles multiplataforma escrito en Node.js que usa Firebase y `clipboardy`. El script principal es `script.js` y el paquete está configurado para ser empaquetado con `pkg`.
+Sincronizador de portapapeles para Windows que mantiene el portapapeles sincronizado entre máquinas usando Firebase Firestore como backend en tiempo real.
 
-**Estado del proyecto (actual):**
+---
 
-- `package.json` contiene un script `package` (`pkg .`) y la sección `pkg` incluye el asset `libs/clipboard_x86_64.exe`.
-- Targets configurados: `node16-win-x64` y `node16-macos-x64`.
-- Archivo principal: `script.js` (también configurado como `bin`).
+## Arquitectura
 
-## Requisitos
+El proyecto está compuesto por **cinco componentes** independientes. C# solo gestiona la UI; toda la lógica está en TypeScript compilada a `.exe` con `@yao-pkg/pkg`.
 
-- Node.js (para desarrollo y empaquetado)
-- `pkg` (opcional, para generar ejecutables): `npm install -g pkg`
-- Dependencias (instalar con `npm install`): `firebase`, `clipboardy`, `readline-sync`
-
-## Instalación
-
-```powershell
-npm install
+```
+Usuario
+  └─▶ ClipboardSync-Setup.exe  (= launcher.exe, primera vez)
+        └─▶ SetupForm           descarga app.zip de GitHub → extrae en AppDir → acceso directo
+              └─▶ launcher.exe  (ya en AppDir, ejecuciones normales)
+                    └─▶ LaunchingForm  muestra "Iniciando..." mientras...
+                          └─▶ launcher-engine.exe  comprueba versión en GitHub
+                                ├─▶ { action: "launch" }  → lanza clipboard-sync-ui.exe
+                                └─▶ { action: "update" }  → UpdateForm descarga app.zip
+                                                                └─▶ updater-engine.exe  copia ficheros
 ```
 
-## Empaquetado (generar binarios con `pkg`)
+### `clipboard-sync-engine` (TypeScript → `.exe`)
 
-1. Instala `pkg` si no lo tienes:
+El núcleo de la sincronización. Escucha cambios en el portapapeles local y en Firestore, propagando las modificaciones en tiempo real. Se ejecuta como proceso de fondo sin ventana, lanzado y gestionado por la UI.
 
-```powershell
-npm install -g pkg
+- Fuente: `src/script.ts`
+- Empaquetado con `@yao-pkg/pkg` → `clipboard-sync-engine.exe`
+- Config: `%LOCALAPPDATA%\clipboard-sync\config.json`
+- Requiere `libs/clipboard_x86_64.exe` en la misma carpeta (embebido en el pkg)
+
+### `clipboard-sync-ui` (C# .NET 9 WinForms)
+
+Interfaz gráfica que gestiona el ciclo de vida del engine. Muestra los logs en tiempo real, estado de conexión y controles para detener/reiniciar.
+
+- Fuente: `sync-ui/`
+- Instancia única (Mutex global)
+- Icono en bandeja del sistema
+- Pide el `userId` la primera vez si no existe config
+- Al cerrar la ventana detiene el engine completamente
+- Modo **dark** con acento `#2cb232`
+
+### `launcher` (C# .NET 9 WinForms)
+
+Punto de entrada para el usuario. Se distribuye como `ClipboardSync-Setup.exe`.
+
+- Fuente: `launcher/`
+- **Primera ejecución** (no está en AppDir): muestra `SetupForm` — descarga `app.zip` de la última GitHub Release, verifica SHA-256, extrae en `%LOCALAPPDATA%\clipboard-sync\`, crea acceso directo en el escritorio, relanza desde AppDir
+- **Ejecuciones normales** (ya en AppDir): muestra `LaunchingForm` ("Iniciando...") y en background lanza `launcher-engine.exe`
+
+### `launcher-engine` (TypeScript → `.exe`)
+
+Proceso de vida corta lanzado por el launcher. Comprueba la versión en GitHub y emite una línea JSON por stdout.
+
+- Fuente: `src/launcher-engine.ts`
+- Salida: `{ "action": "launch" }` · `{ "action": "update", "version": "...", "appZipUrl": "...", "sha256Url": "..." }` · `{ "action": "error", "message": "..." }`
+- Si hay error de red lanza la UI directamente (fail-open)
+
+### `updater-engine` (TypeScript → `.exe`)
+
+Proceso de vida corta lanzado por `UpdateForm` tras descargar y verificar `app.zip`. Hace la copia de ficheros.
+
+- Fuente: `src/updater-engine.ts`
+- Recibe `AppDir` como `argv[2]`
+- Mata `clipboard-sync-ui` y `clipboard-sync-engine`, copia los ficheros de `tmp_updater/` a AppDir
+- Emite líneas JSON de progreso: `{ "step": "kill"|"copy"|"done"|"error", "message": "...", "pct": 0-100 }`
+
+---
+
+## Estructura del repositorio
+
+```
+clipboard-sync-repo/
+├── src/
+│   ├── script.ts              # clipboard-sync-engine (sync con Firebase)
+│   ├── launcher-engine.ts     # launcher-engine (comprueba versión GitHub)
+│   └── updater-engine.ts      # updater-engine (copia ficheros en actualización)
+├── sync-ui/
+│   ├── MainForm.cs            # Ventana principal + tray + UserIdDialog
+│   ├── SyncEngineManager.cs   # Gestión del proceso engine
+│   └── SyncApp.csproj
+├── launcher/
+│   ├── Program.cs             # Detección setup/normal mode
+│   ├── SetupForm.cs           # Primera instalación (descarga app.zip)
+│   ├── LaunchingForm.cs       # Pantalla de carga mientras engine comprueba versión
+│   ├── UpdateForm.cs          # Descarga + verificación SHA-256 + lanza updater-engine
+│   ├── HttpDownloader.cs      # Helper compartido: descarga con progreso + SHA-256
+│   └── ClipboardSync.csproj
+├── shared/
+│   └── DarkTheme.cs           # Dark mode + DWM title bar (compartido entre proyectos C#)
+├── scripts/
+│   ├── start-local.mjs        # npm run dev  → lanza clipboard-sync-ui directamente
+│   ├── stage-local.mjs        # npm run dev:launcher → simula flujo completo con launcher
+│   ├── stage-release.mjs      # npm run stage-release → genera ClipboardSync-Setup.exe
+│   ├── package-all.mjs        # npm run package → empaqueta los 3 engines TS
+│   └── generate-icon.mjs      # npm run generate-icon → SVG → ICO
+├── assets/
+│   ├── logo.svg               # Fuente del icono (escudo con {A})
+│   └── logo.ico               # Icono generado (usado por proyectos C#)
+├── libs/
+│   └── clipboard_x86_64.exe   # Binario requerido por clipboardy en Windows
+├── dist/                      # Salida compilación TS + publish C# (ignorada en git)
+├── tsconfig.json
+├── package.json
+└── version.txt                # Versión actual (ej. 1.0.0)
 ```
 
-2. Empaqueta usando el script:
+---
+
+## Desarrollo local
+
+### Requisitos
+
+- Node.js 24+
+- .NET SDK 9
+- `npm install`
+
+### Scripts disponibles
+
+| Script                  | Descripción                                                                                                           |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`           | Compila TS, empaqueta engines, compila `sync-ui` (Debug), copia a AppDir y lanza `clipboard-sync-ui.exe` directamente |
+| `npm run dev:launcher`  | Igual que `dev` pero publica C# como **self-contained** y lanza `launcher.exe` — simula el flujo real completo        |
+| `npm run dev:engine`    | Lanza solo el engine vía `ts-node` (sin UI). Requiere que `config.json` ya exista                                     |
+| `npm run build`         | Compila TypeScript → `dist/`                                                                                          |
+| `npm run package`       | `build` + empaqueta los 3 engines con `pkg` → `.exe` en la raíz                                                       |
+| `npm run stage-release` | Publica launcher como self-contained → `release-staging/ClipboardSync-Setup.exe`                                      |
+| `npm run generate-icon` | Convierte `assets/logo.svg` → `assets/logo.ico` (ejecutar al cambiar el SVG)                                          |
+
+### Flujos de desarrollo
+
+**Desarrollo diario de la UI** (arranque rápido):
 
 ```powershell
-npm run package
+npm run dev
 ```
 
-El `package.json` actual incluye el asset `libs/clipboard_x86_64.exe` y targets tanto para Windows como para macOS, por lo que al empaquetar se tendrán en cuenta ambos.
-
-### Notas específicas por plataforma
-
-- Windows: cuando se empaqueta con `pkg`, el proyecto espera encontrar `libs/clipboard_x86_64.exe` junto al ejecutable final (por ejemplo, en `dist` o la misma carpeta que el `.exe`). `script.js` fuerza el uso de ese binario en tiempo de ejecución cuando detecta `process.pkg` y `process.platform === 'win32'`.
-- macOS / Linux: `clipboardy` funciona de forma nativa y no requiere el binario externo.
-
-## Uso
-
-Al ejecutar el script empaquetado o en desarrollo, el programa te pedirá un `userId` (se guarda en `~/.clipboard-sync-config.json`) usado como identificador en Firestore. El proceso sincroniza el portapapeles local con el documento `clipboard/<userId>` en Firestore.
-
-Ejemplo de ejecución en desarrollo:
+**Testear el flujo del launcher** (launcher → version check → lanza UI):
 
 ```powershell
-node script.js
+npm run dev:launcher
 ```
 
-Opciones:
+**Simular primera instalación limpia**:
 
-- `--help` o `-h`: muestra ayuda básica.
+```powershell
+Remove-Item "$env:LOCALAPPDATA\clipboard-sync" -Recurse -Force
+npm run dev:launcher
+```
 
-## Seguridad / Privacidad
+La primera vez pedirá el `userId` (email registrado en Firebase Authentication).
 
-- El `script.js` contiene una configuración de Firebase con claves públicas de configuración. Estas claves permiten el acceso al proyecto Firebase configurado; revisa si debes usar tu propio proyecto o restringir el acceso.
+---
 
-## Estructura relevante
+## Release / CI
 
-- `script.js` — script principal que sincroniza el portapapeles con Firestore.
-- `package.json` — contiene dependencias y configuración de `pkg`.
-- `libs/clipboard_x86_64.exe` — binario usado en Windows empaquetado junto al `.exe`.
+El workflow `.github/workflows/release.yml` se dispara manualmente (`workflow_dispatch`) con:
 
-## Créditos
+- `version`: número de versión (ej. `1.2.3`, sin `v`)
+- `branch`: rama desde la que construir (por defecto `main`)
 
-- clipboardy
-- pkg
-- Firebase
+Genera y publica en GitHub Releases:
+
+| Artefacto                 | Descripción                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------- |
+| `ClipboardSync-Setup.exe` | El launcher (self-contained). El usuario solo descarga esto                           |
+| `app.zip`                 | Todos los ejecutables + `libs/` + `version.txt`. El setup lo descarga automáticamente |
+| `app.zip.sha256`          | Hash SHA-256 de `app.zip` para verificación de integridad                             |
+
+### Contenido de `app.zip`
+
+```
+launcher.exe
+clipboard-sync-ui.exe
+clipboard-sync-engine.exe
+launcher-engine.exe
+updater-engine.exe
+libs/
+  clipboard_x86_64.exe
+version.txt
+```
+
+---
+
+## Flujo de usuario final
+
+1. Descarga **`ClipboardSync-Setup.exe`** desde GitHub Releases
+2. Doble click → ventana "Descargando Clipboard Sync..." con barra de progreso
+3. Se descarga `app.zip` automáticamente, se verifica el hash y se extrae en `%LOCALAPPDATA%\clipboard-sync\`
+4. Se crea un acceso directo **"Clipboard Sync"** en el escritorio
+5. Se relanza el launcher desde AppDir
+6. El launcher comprueba si hay actualizaciones en GitHub
+7. Si no hay → lanza `clipboard-sync-ui.exe` directamente
+8. Si hay → muestra diálogo de actualización con opción de actualizar o continuar
+9. La UI pide el `userId` la primera vez y lo guarda en `config.json`
+
+A partir de ahí el usuario solo usa el acceso directo del escritorio.
+
+---
+
+## Configuración
+
+`%LOCALAPPDATA%\clipboard-sync\config.json`:
+
+```json
+{
+  "userId": "correo@ejemplo.com"
+}
+```
+
+El `userId` es el email del usuario registrado en Firebase Authentication. Se usa como identificador del documento en Firestore (`clipboard/{userId}`). Todos los dispositivos del mismo usuario leen/escriben ese documento para sincronizar el portapapeles.

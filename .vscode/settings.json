@@ -9,5 +9,6 @@
     "*/**/node_modules/": true,
     "dist/": true
   },
-  "hide-files.files": []
+  "hide-files.files": [],
+  "explorer.excludeGitIgnore": true
 }

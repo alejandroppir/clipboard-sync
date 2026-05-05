@@ -2,25 +2,39 @@
   "name": "clipboard-sync",
   "version": "1.0.0",
   "description": "Sincronizador de portapapeles",
-  "main": "script.js",
-  "bin": "script.js",
+  "main": "dist/script.js",
+  "bin": "dist/script.js",
   "author": "",
   "license": "ISC",
   "scripts": {
-    "package": "pkg ."
+    "generate-icon": "node scripts/generate-icon.mjs",
+    "build": "tsc",
+    "package": "npm run build && node scripts/package-all.mjs",
+    "dev": "node scripts/start-local.mjs",
+    "dev:engine": "ts-node src/script.ts",
+    "dev:launcher": "node scripts/stage-local.mjs",
+    "stage-release": "node scripts/stage-release.mjs"
   },
   "dependencies": {
-    "firebase": "^9.22.2",
-    "readline-sync": "^1.4.10",
-    "clipboardy": "^2.3.0"
+    "clipboardy": "^2.3.0",
+    "firebase": "^9.22.2"
   },
   "pkg": {
     "assets": [
       "libs/clipboard_x86_64.exe"
     ],
     "targets": [
-      "node16-win-x64",
-      "node16-macos-x64"
+      "node24-win-x64"
     ]
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/node": "^25.6.0",
+    "@yao-pkg/pkg": "^6.19.0",
+    "png-to-ico": "^3.0.1",
+    "rcedit": "^5.0.2",
+    "sharp": "^0.34.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
   }
 }
