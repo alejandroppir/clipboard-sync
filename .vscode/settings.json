@@ -10,5 +10,6 @@
     "dist/": true
   },
   "hide-files.files": [],
-  "explorer.excludeGitIgnore": true
+  "explorer.excludeGitIgnore": true,
+  "git.addAICoAuthor": "off"
 }
