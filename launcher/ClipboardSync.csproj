@@ -11,8 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Exclude the Updater sub-project (it has its own .csproj) -->
-    <Compile Remove="Updater\**\*.cs" />
+    <Compile Include="..\shared\DarkTheme.cs" />
   </ItemGroup>
 
 </Project>

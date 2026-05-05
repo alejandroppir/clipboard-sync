@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Text.Json;
+using ClipboardSyncShared;
 
 namespace ClipboardSync;
 
@@ -127,11 +127,11 @@ internal sealed class UpdateForm : Form
 
             // Step 2 — Download app.zip with progress
             string zipPath = Path.Combine(TmpDir, "app.zip");
-            await DownloadWithProgressAsync(client, _appZipUrl, zipPath, pct => SetStatus($"Descargando... {pct}%", pct));
+            await HttpDownloader.DownloadWithProgressAsync(client, _appZipUrl, zipPath, pct => SetStatus($"Descargando... {pct}%", pct));
 
             // Step 3 — Verify SHA-256
             SetStatus("Verificando integridad del archivo...", 91);
-            string actualHash = await Task.Run(() => ComputeSha256(zipPath));
+            string actualHash = await Task.Run(() => HttpDownloader.ComputeSha256(zipPath));
             if (actualHash != expectedHash)
             {
                 CleanupTmpDir();
@@ -248,33 +248,5 @@ internal sealed class UpdateForm : Form
     private void CleanupTmpDir()
     {
         try { if (Directory.Exists(TmpDir)) Directory.Delete(TmpDir, recursive: true); } catch { }
-    }
-
-    private static async Task DownloadWithProgressAsync(HttpClient client, string url, string destPath, Action<int> onProgress)
-    {
-        using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-        response.EnsureSuccessStatusCode();
-
-        long? total = response.Content.Headers.ContentLength;
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        await using var file   = new FileStream(destPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 81920, useAsync: true);
-
-        byte[] buffer     = new byte[81920];
-        long   downloaded = 0;
-        int    read;
-        while ((read = await stream.ReadAsync(buffer)) > 0)
-        {
-            await file.WriteAsync(buffer.AsMemory(0, read));
-            downloaded += read;
-            if (total.HasValue && total > 0)
-                onProgress(Math.Min((int)(downloaded * 90L / total.Value), 90));
-        }
-    }
-
-    private static string ComputeSha256(string filePath)
-    {
-        using var sha256 = SHA256.Create();
-        using var stream = File.OpenRead(filePath);
-        return Convert.ToHexString(sha256.ComputeHash(stream));
     }
 }

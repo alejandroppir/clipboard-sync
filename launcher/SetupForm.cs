@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Text.Json;
+using ClipboardSyncShared;
 
 namespace ClipboardSync;
 
@@ -117,13 +117,13 @@ internal sealed class SetupForm : Form
 
             // ── 3. Download app.zip with progress ────────────────────────────
             string tmpZip = Path.Combine(Path.GetTempPath(), $"clipboard-sync-setup-{Guid.NewGuid():N}.zip");
-            await DownloadWithProgressAsync(client, appZipUrl, tmpZip, pct => SetStatus($"Descargando... {pct}%", 5 + (int)(pct * 0.80)));
+            await HttpDownloader.DownloadWithProgressAsync(client, appZipUrl, tmpZip, pct => SetStatus($"Descargando... {pct}%", 5 + (int)(pct * 0.80)));
 
             // ── 4. Verify SHA-256 ────────────────────────────────────────────
             if (expectedHash is not null)
             {
                 SetStatus("Verificando integridad...", 87);
-                string actual = await Task.Run(() => ComputeSha256(tmpZip));
+                string actual = await Task.Run(() => HttpDownloader.ComputeSha256(tmpZip));
                 if (actual != expectedHash)
                 {
                     try { File.Delete(tmpZip); } catch { }
@@ -151,35 +151,6 @@ internal sealed class SetupForm : Form
         {
             ShowError($"Error durante la instalación:\n{ex.Message}");
         }
-    }
-
-    private static async Task DownloadWithProgressAsync(HttpClient client, string url, string destPath, Action<int> onProgress)
-    {
-        using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-        response.EnsureSuccessStatusCode();
-
-        long total    = response.Content.Headers.ContentLength ?? -1;
-        long received = 0;
-
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        await using var file   = File.Create(destPath);
-
-        var buffer = new byte[81920];
-        int read;
-        while ((read = await stream.ReadAsync(buffer)) > 0)
-        {
-            await file.WriteAsync(buffer.AsMemory(0, read));
-            received += read;
-            if (total > 0)
-                onProgress((int)(received * 100 / total));
-        }
-    }
-
-    private static string ComputeSha256(string filePath)
-    {
-        using var sha = SHA256.Create();
-        using var fs  = File.OpenRead(filePath);
-        return Convert.ToHexString(sha.ComputeHash(fs)).ToUpperInvariant();
     }
 
     private static void CreateDesktopShortcut()

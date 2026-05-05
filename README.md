@@ -78,16 +78,16 @@ clipboard-sync-repo/
 ├── sync-ui/
 │   ├── MainForm.cs            # Ventana principal + tray + UserIdDialog
 │   ├── SyncEngineManager.cs   # Gestión del proceso engine
-│   ├── DarkTheme.cs           # Helper dark mode + DWM title bar
 │   └── SyncApp.csproj
 ├── launcher/
 │   ├── Program.cs             # Detección setup/normal mode
 │   ├── SetupForm.cs           # Primera instalación (descarga app.zip)
 │   ├── LaunchingForm.cs       # Pantalla de carga mientras engine comprueba versión
 │   ├── UpdateForm.cs          # Descarga + verificación SHA-256 + lanza updater-engine
-│   ├── DarkTheme.cs           # Helper dark mode (igual que sync-ui)
-│   ├── ClipboardSync.csproj
-│   └── Updater/               # Stub vacío (lógica migrada a updater-engine.ts)
+│   ├── HttpDownloader.cs      # Helper compartido: descarga con progreso + SHA-256
+│   └── ClipboardSync.csproj
+├── shared/
+│   └── DarkTheme.cs           # Dark mode + DWM title bar (compartido entre proyectos C#)
 ├── scripts/
 │   ├── start-local.mjs        # npm run dev  → lanza clipboard-sync-ui directamente
 │   ├── stage-local.mjs        # npm run dev:launcher → simula flujo completo con launcher
@@ -148,7 +148,7 @@ Remove-Item "$env:LOCALAPPDATA\clipboard-sync" -Recurse -Force
 npm run dev:launcher
 ```
 
-La primera vez pedirá el `userId` de Firebase.
+La primera vez pedirá el `userId` (email registrado en Firebase Authentication).
 
 ---
 

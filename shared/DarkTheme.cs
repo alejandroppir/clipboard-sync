@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace ClipboardSync;
+namespace ClipboardSyncShared;
 
 /// <summary>
 /// Applies a consistent dark theme with the app accent color (#2cb232) to any WinForms Form.
@@ -15,15 +15,17 @@ internal static class DarkTheme
     internal static readonly Color Border     = Color.FromArgb(0x55, 0x55, 0x55);
     internal static readonly Color Accent     = ColorTranslator.FromHtml("#2cb232");
 
+    // DWMWA_USE_IMMERSIVE_DARK_MODE = 20 (Win11); attribute 19 works on Win10 2004+
     private const int DwmwaDarkMode    = 20;
     private const int DwmwaDarkModeLeg = 19;
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int pvAttr, int cbAttr);
 
+    /// <summary>Darkens title bar and styles all child controls recursively.</summary>
     internal static void Apply(Form form)
     {
-        _ = form.Handle;
+        _ = form.Handle; // force HWND creation before DWM call
         int dark = 1;
         if (DwmSetWindowAttribute(form.Handle, DwmwaDarkMode, ref dark, 4) != 0)
             DwmSetWindowAttribute(form.Handle, DwmwaDarkModeLeg, ref dark, 4);
@@ -31,6 +33,18 @@ internal static class DarkTheme
         form.BackColor = Background;
         form.ForeColor = Text;
         StyleControls(form.Controls);
+    }
+
+    /// <summary>Styles a ContextMenuStrip (not in the Controls tree).</summary>
+    internal static void StyleMenu(ContextMenuStrip menu)
+    {
+        menu.BackColor = Surface;
+        menu.ForeColor = Text;
+        foreach (ToolStripItem item in menu.Items)
+        {
+            item.BackColor = Surface;
+            item.ForeColor = Text;
+        }
     }
 
     private static void StyleControls(Control.ControlCollection controls)
@@ -46,6 +60,7 @@ internal static class DarkTheme
                     break;
 
                 case Button btn:
+                    // Only restyle buttons that haven't been given a custom (accent) color
                     if (btn.BackColor == SystemColors.Control)
                     {
                         btn.FlatStyle = FlatStyle.Flat;

@@ -6,8 +6,6 @@ dist/
 # C# build artifacts
 launcher/bin/
 launcher/obj/
-launcher/Updater/bin/
-launcher/Updater/obj/
 sync-ui/bin/
 sync-ui/obj/
 **/*.csproj.user

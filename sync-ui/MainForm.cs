@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ClipboardSyncShared;
 
 namespace SyncApp;
 
@@ -22,6 +23,25 @@ internal sealed class MainForm : Form
     private enum EngineStatus { Running, Stopped, Error }
     private EngineStatus _status = EngineStatus.Stopped;
 
+    // ── Button factory ─────────────────────────────────────────────────────
+    private static Button MakeButton(string text, bool accent = false)
+    {
+        var btn = new Button
+        {
+            Text      = text,
+            Size      = new Size(100, 30),
+            Margin    = new Padding(4),
+            FlatStyle = FlatStyle.Flat,
+        };
+        btn.FlatAppearance.BorderSize = 0;
+        if (accent)
+        {
+            btn.BackColor = ColorTranslator.FromHtml("#2cb232");
+            btn.ForeColor = Color.White;
+        }
+        return btn;
+    }
+
     internal MainForm()
     {
         _engine = new SyncEngineManager();
@@ -43,16 +63,7 @@ internal sealed class MainForm : Form
             Text = "Estado: Iniciando..."
         };
 
-        _changeUserIdBtn = new Button
-        {
-            Text = "Cambiar",
-            Size = new Size(68, 24),
-            Margin = new Padding(4, 4, 6, 4),
-            FlatStyle = FlatStyle.Flat,
-            Font = new Font(Font.FontFamily, 8f),
-            Anchor = AnchorStyles.None
-        };
-        _changeUserIdBtn.FlatAppearance.BorderSize = 1;
+        _changeUserIdBtn = MakeButton("Cambiar");
         _changeUserIdBtn.Click += (_, _) => ChangeUserId();
 
         _userIdLabel = new Label
@@ -94,26 +105,10 @@ internal sealed class MainForm : Form
         };
 
         // ── Button panel ──────────────────────────────────────────────────────
-        _stopBtn = new Button
-        {
-            Text = "Detener",
-            Size = new Size(100, 30),
-            Margin = new Padding(4),
-            Enabled = true
-        };
+        _stopBtn = MakeButton("Detener");
         _stopBtn.Click += (_, _) => StopEngine();
 
-        _restartBtn = new Button
-        {
-            Text = "Reiniciar",
-            Size = new Size(100, 30),
-            Margin = new Padding(4),
-            BackColor = ColorTranslator.FromHtml("#2cb232"),
-            ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat,
-            Enabled = true
-        };
-        _restartBtn.FlatAppearance.BorderSize = 0;
+        _restartBtn = MakeButton("Reiniciar", accent: true);
         _restartBtn.Click += (_, _) => RestartEngine();
 
         var btnPanel = new FlowLayoutPanel
