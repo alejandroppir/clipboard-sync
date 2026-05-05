@@ -16,6 +16,8 @@ jobs:
       # ── Checkout ────────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # ── Bump version in package.json ────────────────────────────────────────
       - name: Set version in package.json
@@ -47,7 +49,8 @@ jobs:
       # ── Package with electron-builder ───────────────────────────────────────
       # electron-builder genera ClipboardSync.exe + latest.yml + SHA-512 automáticamente
       - name: Package Electron app
-        run: electron-builder --win portable --publish always
+        run: npx electron-builder --win portable --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
