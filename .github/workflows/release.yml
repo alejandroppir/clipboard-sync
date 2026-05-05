@@ -7,11 +7,6 @@ on:
         description: 'Version (e.g. 1.2.3 — without the "v" prefix)'
         required: true
         type: string
-      branch:
-        description: 'Branch to build from'
-        required: true
-        default: 'main'
-        type: string
 
 jobs:
   release:
@@ -21,18 +16,19 @@ jobs:
       # ── Checkout ────────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch }}
+
+      # ── Bump version in package.json ────────────────────────────────────────
+      - name: Set version in package.json
+        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
 
       # ── Create and push tag ─────────────────────────────────────────────────
       - name: Create and push tag
         shell: pwsh
         run: |
-          $tag = "v${{ github.event.inputs.version }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag $tag
-          git push origin $tag
+          git tag "v${{ github.event.inputs.version }}"
+          git push origin "v${{ github.event.inputs.version }}"
 
       # ── Node.js setup ───────────────────────────────────────────────────────
       - name: Set up Node.js 24
@@ -44,87 +40,14 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      # ── Build + package all TS engines ────────────────────────────────────
+      # ── Build TypeScript ────────────────────────────────────────────────────
       - name: Build TypeScript
         run: npm run build
 
-      - name: Package all TS engines
-        run: npm run package
-
-      # ── .NET setup ──────────────────────────────────────────────────────────
-      - name: Set up .NET 9
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-
-      # ── Sync version from tag into version.txt ──────────────────────────────
-      - name: Write version.txt
-        shell: pwsh
-        run: |
-          Set-Content -Path version.txt -Value "${{ github.event.inputs.version }}" -NoNewline
-
-      # ── Build C# projects ───────────────────────────────────────────────────
-      - name: Publish launcher
-        run: >
-          dotnet publish launcher/ClipboardSync.csproj
-          -c Release -r win-x64
-          --self-contained true
-          -p:PublishSingleFile=true
-          -o dist/launcher
-
-      - name: Publish sync-ui
-        run: >
-          dotnet publish sync-ui/SyncApp.csproj
-          -c Release -r win-x64
-          --self-contained true
-          -p:PublishSingleFile=true
-          -o dist/sync-ui
-
-      # ── Assemble app.zip ────────────────────────────────────────────────────
-      - name: Assemble app.zip contents
-        shell: pwsh
-        run: |
-          $staging = "dist/app-staging"
-          New-Item -ItemType Directory -Force -Path "$staging/libs" | Out-Null
-
-          # Core executables
-          Copy-Item "dist/launcher/launcher.exe"                "$staging/launcher.exe"
-          Copy-Item "dist/sync-ui/clipboard-sync-ui.exe"        "$staging/clipboard-sync-ui.exe"
-          Copy-Item "clipboard-sync-engine.exe"                  "$staging/clipboard-sync-engine.exe"
-          Copy-Item "launcher-engine.exe"                        "$staging/launcher-engine.exe"
-          Copy-Item "updater-engine.exe"                         "$staging/updater-engine.exe"
-
-          # Clipboard binary
-          Copy-Item "libs/clipboard_x86_64.exe"                 "$staging/libs/clipboard_x86_64.exe"
-
-          # Version
-          Copy-Item "version.txt"                                "$staging/version.txt"
-
-          # Create zip
-          Compress-Archive -Path "$staging/*" -DestinationPath "dist/app.zip" -Force
-
-      # ── SHA-256 ─────────────────────────────────────────────────────────────
-      - name: Generate SHA-256
-        shell: pwsh
-        run: |
-          $hash = (Get-FileHash "dist/app.zip" -Algorithm SHA256).Hash.ToLower()
-          "$hash  app.zip" | Set-Content "dist/app.zip.sha256"
-
-      # ── Rename launcher as setup exe ────────────────────────────────────────
-      - name: Prepare ClipboardSync-Setup.exe
-        shell: pwsh
-        run: Copy-Item "dist/launcher/launcher.exe" "dist/ClipboardSync-Setup.exe"
-
-      # ── Create GitHub Release ────────────────────────────────────────────────
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ github.event.inputs.version }}
-          name: v${{ github.event.inputs.version }}
-          files: |
-            dist/ClipboardSync-Setup.exe
-            dist/app.zip
-            dist/app.zip.sha256
-          generate_release_notes: true
+      # ── Package with electron-builder ───────────────────────────────────────
+      # electron-builder genera ClipboardSync.exe + latest.yml + SHA-512 automáticamente
+      - name: Package Electron app
+        run: electron-builder --win portable --publish always
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false

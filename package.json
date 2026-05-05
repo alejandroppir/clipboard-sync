@@ -2,39 +2,30 @@
   "name": "clipboard-sync",
   "version": "1.0.0",
   "description": "Sincronizador de portapapeles",
-  "main": "dist/script.js",
-  "bin": "dist/script.js",
+  "main": "dist/main/main.js",
   "author": "",
   "license": "ISC",
   "scripts": {
     "generate-icon": "node scripts/generate-icon.mjs",
-    "build": "tsc",
-    "package": "npm run build && node scripts/package-all.mjs",
-    "dev": "node scripts/start-local.mjs",
-    "dev:engine": "ts-node src/script.ts",
-    "dev:launcher": "node scripts/stage-local.mjs",
-    "stage-release": "node scripts/stage-release.mjs"
+    "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json && node -e \"const fs=require('fs');fs.mkdirSync('dist/renderer',{recursive:true});fs.copyFileSync('src/renderer/settings.html','dist/renderer/settings.html');fs.copyFileSync('src/renderer/settings.css','dist/renderer/settings.css');\"",
+    "dev": "npm run build && electron .",
+    "package": "npm run build && electron-builder --win portable",
+    "release": "npm run build && electron-builder --win portable --publish always"
   },
   "dependencies": {
-    "clipboardy": "^2.3.0",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "electron-updater": "^6.8.3",
     "firebase": "^9.22.2"
-  },
-  "pkg": {
-    "assets": [
-      "libs/clipboard_x86_64.exe"
-    ],
-    "targets": [
-      "node24-win-x64"
-    ]
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^25.6.0",
-    "@yao-pkg/pkg": "^6.19.0",
+    "electron": "^41.5.0",
+    "electron-builder": "^26.8.1",
     "png-to-ico": "^3.0.1",
     "rcedit": "^5.0.2",
     "sharp": "^0.34.5",
-    "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
 }
