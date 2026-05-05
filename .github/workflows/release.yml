@@ -21,7 +21,7 @@ jobs:
 
       # ── Bump version in package.json ────────────────────────────────────────
       - name: Set version in package.json
-        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
+        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version --allow-same-version
 
       # ── Create and push tag ─────────────────────────────────────────────────
       - name: Create and push tag
