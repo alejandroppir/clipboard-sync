@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>..\assets\logo.ico</ApplicationIcon>
+    <AssemblyName>launcher</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Exclude the Updater sub-project (it has its own .csproj) -->
+    <Compile Remove="Updater\**\*.cs" />
+  </ItemGroup>
+
+</Project>
