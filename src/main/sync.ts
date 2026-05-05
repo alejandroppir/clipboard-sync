@@ -1,7 +1,9 @@
 import os from 'os';
-import {clipboard} from 'electron';
+import {clipboard, app} from 'electron';
 import {initializeApp, FirebaseApp} from 'firebase/app';
 import {getFirestore, doc, setDoc, onSnapshot, Firestore, Unsubscribe} from 'firebase/firestore';
+import {format} from 'date-fns';
+import {toZonedTime} from 'date-fns-tz';
 import {loadConfig} from './config';
 
 const firebaseConfig = {
@@ -27,6 +29,10 @@ function log(line: string): void {
   onLog(line);
 }
 
+function madridTimestamp(): string {
+  return format(toZonedTime(new Date(), 'Europe/Madrid'), 'yyyy/MM/dd-HH:mm:ss');
+}
+
 export function setCallbacks(logCb: LogCallback, statusCb: StatusCallback): void {
   onLog = logCb;
   onStatus = statusCb;
@@ -46,8 +52,8 @@ export function startSync(): void {
 
   const userId = config.userId;
   const machineId = os.hostname();
-  log(`[✓] Usuario configurado: ${userId}`);
-  const docRef = doc(db!, 'clipboard', userId);
+  log(`✅ Usuario configurado: ${userId}`);
+  const docRef = doc(db!, 'clipboard-v2', userId);
 
   let lastClipboard = '';
   let lastRemote = '';
@@ -63,14 +69,15 @@ export function startSync(): void {
       await setDoc(docRef, {
         content: current,
         machineId,
-        timestamp: Date.now(),
+        timestamp: madridTimestamp(),
+        appVersion: app.getVersion(),
       });
-      log('[↑] Portapapeles subido.');
+      log('⬆️  Portapapeles subido.');
       previousError = false;
     } catch (err) {
       const error = err as Error;
       if (previousError) return;
-      log(`[!] Error al subir: ${error.message}`);
+      log(`❌ Error al subir: ${error.message}`);
       previousError = true;
     }
   }
@@ -84,17 +91,17 @@ export function startSync(): void {
       lastRemote = remoteContent;
       try {
         clipboard.writeText(remoteContent);
-        log('[↓] Portapapeles descargado.');
+        log('⬇️  Portapapeles descargado.');
       } catch (err) {
         const error = err as Error;
-        log(`[!] Error en portapapeles: ${error.message}`);
+        log(`❌ Error en portapapeles: ${error.message}`);
       }
     }
   });
 
   intervalId = setInterval(() => void uploadClipboardIfChanged(), 1000);
 
-  log(`[>>] Sincronizando para userId="${userId}"`);
+  log(`▶️  Sincronizando para userId="${userId}"`);
   onStatus('running');
 }
 
@@ -108,7 +115,7 @@ export function stopSync(): void {
     intervalId = null;
   }
   onStatus('stopped');
-  log('[*] Sincronización detenida.');
+  log('⏹️  Sincronización detenida.');
 }
 
 export function restartSync(): void {

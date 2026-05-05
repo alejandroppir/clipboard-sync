@@ -20,6 +20,7 @@ export function createSettingsWindow(onLog: (line: string) => void): void {
     minWidth: 480,
     minHeight: 360,
     title: 'Clipboard Sync',
+    icon: path.join(__dirname, '../../assets/logo.ico'),
     backgroundColor: '#1e1e1e',
     show: false,
     webPreferences: {

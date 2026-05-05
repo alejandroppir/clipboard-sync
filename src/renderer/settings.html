@@ -13,8 +13,18 @@
       <span id="status-indicator" class="status-dot stopped"></span>
       <span id="status-text">Detenido</span>
       <span class="spacer"></span>
+      <span id="update-pill" class="update-pill hidden" title="Hay una actualización disponible. Haz clic para ver los detalles."></span>
       <span id="user-id-label" class="user-id">—</span>
       <button id="btn-change-user" class="btn btn-secondary">Cambiar</button>
+    </div>
+
+    <!-- Banda de actualización -->
+    <div id="update-banner" class="update-banner hidden">
+      <span id="update-banner-msg" class="update-banner-msg"></span>
+      <div id="update-banner-actions">
+        <button id="btn-update-confirm" class="btn btn-accent">Actualizar</button>
+        <button id="btn-update-dismiss" class="btn btn-secondary">Ahora no</button>
+      </div>
     </div>
 
     <div class="log-container">

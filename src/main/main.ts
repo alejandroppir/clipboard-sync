@@ -63,7 +63,7 @@ app.whenReady().then(() => {
   if (config) {
     startSync();
   } else {
-    broadcastLog('[*] No hay configuración. Abre la configuración para empezar.');
+    broadcastLog('⚠️  No hay configuración. Abre la configuración para empezar.');
   }
 
   // Inicializar auto-updater (solo en producción)

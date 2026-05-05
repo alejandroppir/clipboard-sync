@@ -13,6 +13,8 @@
     "release": "npm run build && electron-builder --win portable --publish always"
   },
   "dependencies": {
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "electron-updater": "^6.8.3",
     "firebase": "^9.22.2"
   },
