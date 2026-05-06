@@ -56,9 +56,25 @@ jobs:
         run: npm run build
 
       # ── Package with electron-builder ───────────────────────────────────────
-      # electron-builder genera ClipboardSync.exe + latest.yml + SHA-512 automáticamente
       - name: Package Electron app
         run: npx electron-builder --win portable --publish always --config.productName="${{ github.event.inputs.appName }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      # ── Generar y subir latest.yml (portable no lo genera automáticamente) ──
+      - name: Generate and upload latest.yml
+        shell: pwsh
+        run: |
+          $exe = "dist-release\ClipboardSync.exe"
+          $bytes = [System.IO.File]::ReadAllBytes($exe)
+          $sha512 = [System.Security.Cryptography.SHA512]::Create().ComputeHash($bytes)
+          $sha512b64 = [Convert]::ToBase64String($sha512)
+          $size = (Get-Item $exe).Length
+          $date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+          $version = "${{ github.event.inputs.version }}"
+          $yaml = "version: $version`nfiles:`n  - url: ClipboardSync.exe`n    sha512: $sha512b64`n    size: $size`npath: ClipboardSync.exe`nsha512: $sha512b64`nreleaseDate: '$date'"
+          $yaml | Out-File -FilePath "dist-release\latest.yml" -Encoding utf8NoBOM
+          gh release upload "v$version" "dist-release\latest.yml" --repo alejandroppir/clipboard-sync --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
