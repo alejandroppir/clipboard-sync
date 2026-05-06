@@ -16,6 +16,7 @@ function createSplashWindow(): BrowserWindow {
     alwaysOnTop: true,
     icon: path.join(__dirname, '../../assets/logo.ico'),
     backgroundColor: '#141414',
+    show: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -25,6 +26,28 @@ function createSplashWindow(): BrowserWindow {
   splash.loadFile(path.join(__dirname, '../renderer/splash.html'));
   splash.setMenuBarVisibility(false);
   return splash;
+}
+
+function createMainWindow(): BrowserWindow {
+  const mainWin = new BrowserWindow({
+    width: 640,
+    height: 480,
+    minWidth: 480,
+    minHeight: 360,
+    title: 'Clipboard Sync',
+    icon: path.join(__dirname, '../../assets/logo.ico'),
+    backgroundColor: '#141414',
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+  mainWin.loadFile(path.join(__dirname, '../renderer/settings.html'));
+  mainWin.setMenuBarVisibility(false);
+  return mainWin;
 }
 
 export function createSettingsWindow(onLog: (line: string) => void, onReady?: () => void): void {
@@ -38,37 +61,23 @@ export function createSettingsWindow(onLog: (line: string) => void, onReady?: ()
 
   const splash = createSplashWindow();
 
-  win = new BrowserWindow({
-    width: 640,
-    height: 480,
-    minWidth: 480,
-    minHeight: 360,
-    title: 'Clipboard Sync',
-    icon: path.join(__dirname, '../../assets/logo.ico'),
-    backgroundColor: '#1e1e1e',
-    show: false,
-    webPreferences: {
-      preload: path.join(__dirname, '../preload/preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-    },
-  });
+  // Esperar a que el splash esté visible antes de empezar a cargar la ventana principal
+  splash.once('ready-to-show', () => {
+    splash.show();
 
-  win.loadFile(path.join(__dirname, '../renderer/settings.html'));
-  win.setMenuBarVisibility(false);
+    win = createMainWindow();
 
-  win.once('ready-to-show', () => {
-    if (!splash.isDestroyed()) splash.close();
-    win?.show();
-    // Enviar estado actual del sync una vez el renderer esté listo
-    const status = isRunning() ? 'running' : 'stopped';
-    win?.webContents.send('sync-status', status);
-    onReady?.();
-  });
+    win.once('ready-to-show', () => {
+      if (!splash.isDestroyed()) splash.close();
+      win?.show();
+      const status = isRunning() ? 'running' : 'stopped';
+      win?.webContents.send('sync-status', status);
+      onReady?.();
+    });
 
-  win.on('closed', () => {
-    win = null;
+    win.on('closed', () => {
+      win = null;
+    });
   });
 }
 
