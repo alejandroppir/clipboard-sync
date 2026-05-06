@@ -60,24 +60,28 @@ export function createSettingsWindow(onLog: (line: string) => void, onReady?: ()
   nativeTheme.themeSource = 'dark';
 
   const splash = createSplashWindow();
+  const SPLASH_MIN_MS = 1500; // mínimo visible aunque la app cargue rápido
+  const splashStart = Date.now();
 
-  // Esperar a que el splash esté visible antes de empezar a cargar la ventana principal
-  splash.once('ready-to-show', () => {
-    splash.show();
+  // Mostrar splash en cuanto esté listo, y cargar la ventana principal en paralelo
+  splash.once('ready-to-show', () => splash.show());
 
-    win = createMainWindow();
+  win = createMainWindow();
 
-    win.once('ready-to-show', () => {
+  win.once('ready-to-show', () => {
+    const elapsed = Date.now() - splashStart;
+    const delay = Math.max(0, SPLASH_MIN_MS - elapsed);
+    setTimeout(() => {
       if (!splash.isDestroyed()) splash.close();
       win?.show();
       const status = isRunning() ? 'running' : 'stopped';
       win?.webContents.send('sync-status', status);
       onReady?.();
-    });
+    }, delay);
+  });
 
-    win.on('closed', () => {
-      win = null;
-    });
+  win.on('closed', () => {
+    win = null;
   });
 }
 

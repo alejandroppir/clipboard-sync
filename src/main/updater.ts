@@ -1,8 +1,42 @@
 import {autoUpdater} from 'electron-updater';
-import {ipcMain} from 'electron';
+import {ipcMain, app} from 'electron';
+import {spawn} from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 import {getSettingsWindow} from './window';
 
 const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000; // cada 4 horas
+
+let downloadedFilePath: string | null = null;
+
+function installViaScript(onLog: (line: string) => void): void {
+  if (!downloadedFilePath) {
+    onLog('❌ No hay ninguna actualización descargada.');
+    return;
+  }
+
+  const exeSource = downloadedFilePath;
+  const exeTarget = process.execPath;
+  const batPath = path.join(os.tmpdir(), `clipboard-sync-update-${Date.now()}.bat`);
+
+  // El bat espera a que el proceso muera, copia el nuevo exe, lo relanza y se autoelimine
+  const bat = ['@echo off', 'timeout /t 3 /nobreak > nul', `copy /y "${exeSource}" "${exeTarget}"`, `start "" "${exeTarget}"`, `del "%~f0"`].join(
+    '\r\n',
+  );
+
+  fs.writeFileSync(batPath, bat, {encoding: 'utf8'});
+
+  const child = spawn('cmd.exe', ['/c', batPath], {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: true,
+  });
+  child.unref();
+
+  onLog('🔄 Aplicando actualización...');
+  app.quit();
+}
 
 export function initUpdater(onLog: (line: string) => void): void {
   autoUpdater.autoDownload = false;
@@ -36,6 +70,8 @@ export function initUpdater(onLog: (line: string) => void): void {
   });
 
   autoUpdater.on('update-downloaded', (info) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    downloadedFilePath = (info as any).downloadedFile ?? null;
     onLog(`✅ Actualización v${info.version} descargada y lista para instalar.`);
     getSettingsWindow()?.webContents.send('update-ready', info.version);
   });
@@ -61,9 +97,9 @@ export function initUpdater(onLog: (line: string) => void): void {
     });
   });
 
-  // El usuario elige reiniciar ahora
+  // El usuario elige reiniciar ahora — reemplaza el exe portable y relanza
   ipcMain.handle('install-update-now', () => {
-    autoUpdater.quitAndInstall();
+    installViaScript(onLog);
   });
 
   const check = (): void => {
