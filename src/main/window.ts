@@ -5,7 +5,29 @@ import {restartSync, stopSync, isRunning} from './sync';
 
 let win: BrowserWindow | null = null;
 
-export function createSettingsWindow(onLog: (line: string) => void): void {
+function createSplashWindow(): BrowserWindow {
+  const splash = new BrowserWindow({
+    width: 300,
+    height: 200,
+    frame: false,
+    resizable: false,
+    center: true,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    icon: path.join(__dirname, '../../assets/logo.ico'),
+    backgroundColor: '#141414',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+    },
+  });
+  splash.loadFile(path.join(__dirname, '../renderer/splash.html'));
+  splash.setMenuBarVisibility(false);
+  return splash;
+}
+
+export function createSettingsWindow(onLog: (line: string) => void, onReady?: () => void): void {
   if (win && !win.isDestroyed()) {
     win.show();
     win.focus();
@@ -13,6 +35,8 @@ export function createSettingsWindow(onLog: (line: string) => void): void {
   }
 
   nativeTheme.themeSource = 'dark';
+
+  const splash = createSplashWindow();
 
   win = new BrowserWindow({
     width: 640,
@@ -35,10 +59,12 @@ export function createSettingsWindow(onLog: (line: string) => void): void {
   win.setMenuBarVisibility(false);
 
   win.once('ready-to-show', () => {
+    if (!splash.isDestroyed()) splash.close();
     win?.show();
     // Enviar estado actual del sync una vez el renderer esté listo
     const status = isRunning() ? 'running' : 'stopped';
     win?.webContents.send('sync-status', status);
+    onReady?.();
   });
 
   win.on('closed', () => {

@@ -2,7 +2,7 @@ import {autoUpdater} from 'electron-updater';
 import {ipcMain} from 'electron';
 import {getSettingsWindow} from './window';
 
-const CHECK_INTERVAL_MS = 8 * 60 * 60 * 1000; // cada 8 horas
+const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000; // cada 4 horas
 
 export function initUpdater(onLog: (line: string) => void): void {
   autoUpdater.autoDownload = false;
@@ -62,6 +62,6 @@ export function initUpdater(onLog: (line: string) => void): void {
     });
   };
 
-  check();
+  check(); // al arrancar — pequeño delay para que el renderer ya esté escuchando
   setInterval(check, CHECK_INTERVAL_MS);
 }

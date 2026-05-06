@@ -55,8 +55,12 @@ app.whenReady().then(() => {
   // Crear tray
   createTray(broadcastLog);
 
-  // Abrir ventana de configuración al arrancar
-  createSettingsWindow(broadcastLog);
+  // Abrir ventana de configuración al arrancar; iniciar updater cuando esté lista
+  createSettingsWindow(broadcastLog, () => {
+    if (app.isPackaged) {
+      initUpdater(broadcastLog);
+    }
+  });
 
   // Iniciar sync si hay config
   const config = loadConfig();
@@ -64,10 +68,5 @@ app.whenReady().then(() => {
     startSync();
   } else {
     broadcastLog('⚠️  No hay configuración. Abre la configuración para empezar.');
-  }
-
-  // Inicializar auto-updater (solo en producción)
-  if (app.isPackaged) {
-    initUpdater(broadcastLog);
   }
 });

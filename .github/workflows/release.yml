@@ -7,6 +7,11 @@ on:
         description: 'Version (e.g. 1.2.3 — without the "v" prefix)'
         required: true
         type: string
+      appName:
+        description: 'Nombre de la aplicación (ej: Clipboard Sync, Dev Utils...)'
+        required: false
+        default: 'Clipboard Sync'
+        type: string
 
 jobs:
   release:
@@ -53,7 +58,7 @@ jobs:
       # ── Package with electron-builder ───────────────────────────────────────
       # electron-builder genera ClipboardSync.exe + latest.yml + SHA-512 automáticamente
       - name: Package Electron app
-        run: npx electron-builder --win portable --publish always
+        run: npx electron-builder --win portable --publish always --config.productName="${{ github.event.inputs.appName }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
