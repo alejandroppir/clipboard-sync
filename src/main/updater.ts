@@ -41,6 +41,11 @@ export function initUpdater(onLog: (line: string) => void): void {
   });
 
   autoUpdater.on('error', (err) => {
+    // app-update.yml ausente = build sin config de publish (ej: release antigua)
+    if (err.message.includes('app-update.yml') || err.message.includes('ENOENT')) {
+      onLog('⚠️  Auto-actualización no disponible en esta versión.');
+      return;
+    }
     onLog(`❌ Error al comprobar actualizaciones: ${err.message}`);
   });
 

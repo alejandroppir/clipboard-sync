@@ -1,0 +1,5 @@
+provider: github
+owner: alejandroppir
+repo: clipboard-sync
+releaseType: release
+updaterCacheDirName: clipboard-sync-updater

@@ -7,6 +7,9 @@ files:
   - dist/preload/**
   - dist/renderer/**
   - assets/logo.ico
+extraResources:
+  - from: resources/app-update.yml
+    to: app-update.yml
 win:
   target:
     - target: portable
