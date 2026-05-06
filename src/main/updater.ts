@@ -43,12 +43,12 @@ export function initUpdater(onLog: (line: string) => void): void {
   autoUpdater.on('error', (err) => {
     // app-update.yml ausente = build sin config de publish (ej: release antigua)
     if (err.message.includes('app-update.yml') || (err.message.includes('ENOENT') && err.message.includes('app-update'))) {
-      onLog('⚠️  Auto-actualización no disponible en esta versión.');
+      onLog('⚠️ Auto-actualización no disponible en esta versión.');
       return;
     }
     // latest.yml ausente = release sin artefactos de actualización (ej: primera release incompleta)
     if (err.message.includes('latest.yml') || err.message.includes('Cannot find latest')) {
-      onLog('⚠️  No se encontró información de actualizaciones en la release actual.');
+      onLog('⚠️ No se encontró información de actualizaciones en la release actual.');
       return;
     }
     onLog(`❌ Error al comprobar actualizaciones: ${err.message}`);
