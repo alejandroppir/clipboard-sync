@@ -42,6 +42,13 @@ const updateBannerActions = document.getElementById('update-banner-actions') as 
 const btnUpdateConfirm = document.getElementById('btn-update-confirm') as HTMLButtonElement;
 const btnUpdateDismiss = document.getElementById('btn-update-dismiss') as HTMLButtonElement;
 const updatePill = document.getElementById('update-pill') as HTMLSpanElement;
+const trayBanner = document.getElementById('tray-banner') as HTMLDivElement;
+const btnTrayBannerDismiss = document.getElementById('btn-tray-banner-dismiss') as HTMLButtonElement;
+
+// ── Banner bandeja ──
+btnTrayBannerDismiss.addEventListener('click', () => {
+  trayBanner.classList.add('hidden');
+});
 
 // ── Estado inicial ──
 (async () => {

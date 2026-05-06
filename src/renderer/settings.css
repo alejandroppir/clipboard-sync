@@ -147,6 +147,42 @@ body {
   border-color: var(--error);
 }
 
+/* ── Tray info banner ── */
+.tray-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: #1a2a3a;
+  border-bottom: 1px solid #2c5282;
+  flex-shrink: 0;
+}
+
+.tray-banner.hidden {
+  display: none;
+}
+
+.tray-banner-msg {
+  flex: 1;
+  font-size: 12px;
+  color: #90cdf4;
+}
+
+.tray-banner-close {
+  background: none;
+  border: none;
+  color: #63b3ed;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tray-banner-close:hover {
+  color: #bee3f8;
+}
+
 /* ── Update banner ── */
 .update-banner {
   display: flex;
