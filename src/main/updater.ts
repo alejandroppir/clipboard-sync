@@ -22,10 +22,20 @@ function installViaScript(onLog: (line: string) => void): void {
   const exeTarget = process.env['PORTABLE_EXECUTABLE_FILE'] ?? process.execPath;
   const batPath = path.join(os.tmpdir(), `clipboard-sync-update-${Date.now()}.bat`);
 
-  // El bat espera a que el proceso muera, copia el nuevo exe, lo relanza y se autoelimine
-  const bat = ['@echo off', 'timeout /t 3 /nobreak > nul', `copy /y "${exeSource}" "${exeTarget}"`, `start "" "${exeTarget}"`, `del "%~f0"`].join(
-    '\r\n',
-  );
+  // El bat espera a que el proceso muera, copia el nuevo exe, lo relanza y se autoelimine.
+  // El primer copy puede fallar si AV/Defender aun tiene el handle — reintenta con 8s extra.
+  const bat = [
+    '@echo off',
+    'timeout /t 3 /nobreak > nul',
+    `copy /y "${exeSource}" "${exeTarget}"`,
+    'if errorlevel 1 (',
+    '  timeout /t 8 /nobreak > nul',
+    `  copy /y "${exeSource}" "${exeTarget}"`,
+    ')',
+    'if errorlevel 1 exit /b 1',
+    `start "" "${exeTarget}"`,
+    'del "%~f0"',
+  ].join('\r\n');
 
   if (!fs.existsSync(exeSource)) {
     onLog(`❌ El archivo de actualización no existe en disco: ${exeSource}`);
