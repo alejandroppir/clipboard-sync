@@ -17,7 +17,9 @@ function installViaScript(onLog: (line: string) => void): void {
   }
 
   const exeSource = downloadedFilePath;
-  const exeTarget = process.execPath;
+  // process.execPath apunta al exe extraído en temp, no al portable original.
+  // electron-builder inyecta PORTABLE_EXECUTABLE_FILE con la ruta real del exe del usuario.
+  const exeTarget = process.env['PORTABLE_EXECUTABLE_FILE'] ?? process.execPath;
   const batPath = path.join(os.tmpdir(), `clipboard-sync-update-${Date.now()}.bat`);
 
   // El bat espera a que el proceso muera, copia el nuevo exe, lo relanza y se autoelimine
@@ -25,7 +27,14 @@ function installViaScript(onLog: (line: string) => void): void {
     '\r\n',
   );
 
+  if (!fs.existsSync(exeSource)) {
+    onLog(`❌ El archivo de actualización no existe en disco: ${exeSource}`);
+    return;
+  }
+
   fs.writeFileSync(batPath, bat, {encoding: 'utf8'});
+
+  onLog(`🔄 Aplicando actualización: ${exeSource} → ${exeTarget}`);
 
   const child = spawn('cmd.exe', ['/c', batPath], {
     detached: true,
@@ -34,13 +43,12 @@ function installViaScript(onLog: (line: string) => void): void {
   });
   child.unref();
 
-  onLog('🔄 Aplicando actualización...');
   app.quit();
 }
 
 export function initUpdater(onLog: (line: string) => void): void {
   autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.autoInstallOnAppQuit = false; // la instalación la gestiona nuestro bat script
 
   autoUpdater.on('checking-for-update', () => {
     onLog('🔍 Comprobando actualizaciones...');
@@ -71,8 +79,8 @@ export function initUpdater(onLog: (line: string) => void): void {
 
   autoUpdater.on('update-downloaded', (info) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    downloadedFilePath = (info as any).downloadedFile ?? null;
-    onLog(`✅ Actualización v${info.version} descargada y lista para instalar.`);
+    downloadedFilePath = ((info as any).downloadedFile as string | null) ?? null;
+    onLog(`✅ Actualización v${info.version} descargada. Ruta: ${downloadedFilePath ?? '(no disponible)'}`);
     getSettingsWindow()?.webContents.send('update-ready', info.version);
   });
 
