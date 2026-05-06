@@ -10,9 +10,14 @@ const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000; // cada 4 horas
 
 let downloadedFilePath: string | null = null;
 
-function installViaScript(onLog: (line: string) => void): void {
+function installViaUpdateMode(onLog: (line: string) => void): void {
   if (!downloadedFilePath) {
     onLog('❌ No hay ninguna actualización descargada.');
+    return;
+  }
+
+  if (!fs.existsSync(downloadedFilePath)) {
+    onLog(`❌ El archivo de actualización no existe en disco: ${downloadedFilePath}`);
     return;
   }
 
@@ -20,45 +25,31 @@ function installViaScript(onLog: (line: string) => void): void {
   // process.execPath apunta al exe extraído en temp, no al portable original.
   // electron-builder inyecta PORTABLE_EXECUTABLE_FILE con la ruta real del exe del usuario.
   const exeTarget = process.env['PORTABLE_EXECUTABLE_FILE'] ?? process.execPath;
-  const batPath = path.join(os.tmpdir(), `clipboard-sync-update-${Date.now()}.bat`);
 
-  // El bat espera a que el proceso muera, copia el nuevo exe, lo relanza y se autoelimine.
-  // El primer copy puede fallar si AV/Defender aun tiene el handle — reintenta con 8s extra.
-  const bat = [
-    '@echo off',
-    'timeout /t 3 /nobreak > nul',
-    `copy /y "${exeSource}" "${exeTarget}"`,
-    'if errorlevel 1 (',
-    '  timeout /t 8 /nobreak > nul',
-    `  copy /y "${exeSource}" "${exeTarget}"`,
-    ')',
-    'if errorlevel 1 exit /b 1',
-    `start "" "${exeTarget}"`,
-    'del "%~f0"',
-  ].join('\r\n');
+  // Copiamos el nuevo exe a un path temporal propio para que actúe como instalador.
+  // Ese proceso corre desde su propio %TEMP%, por lo que puede sobrescribir exeTarget libremente.
+  const setupExe = path.join(os.tmpdir(), `ClipboardSync-setup-${Date.now()}.exe`);
 
-  if (!fs.existsSync(exeSource)) {
-    onLog(`❌ El archivo de actualización no existe en disco: ${exeSource}`);
+  try {
+    fs.copyFileSync(exeSource, setupExe);
+  } catch (err) {
+    onLog(`❌ No se pudo preparar el instalador: ${(err as Error).message}`);
     return;
   }
 
-  fs.writeFileSync(batPath, bat, {encoding: 'utf8'});
+  onLog(`🔄 Lanzando instalador de actualización...`);
 
-  onLog(`🔄 Aplicando actualización: ${exeSource} → ${exeTarget}`);
-
-  const child = spawn('cmd.exe', ['/c', batPath], {
+  spawn(setupExe, ['--update-mode', '--pid', String(process.pid), '--source', exeSource, '--target', exeTarget], {
     detached: true,
     stdio: 'ignore',
-    windowsHide: true,
-  });
-  child.unref();
+  }).unref();
 
   app.quit();
 }
 
 export function initUpdater(onLog: (line: string) => void): void {
   autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = false; // la instalación la gestiona nuestro bat script
+  autoUpdater.autoInstallOnAppQuit = false; // la instalación la gestiona el proceso instalador
 
   autoUpdater.on('checking-for-update', () => {
     onLog('🔍 Comprobando actualizaciones...');
@@ -115,9 +106,9 @@ export function initUpdater(onLog: (line: string) => void): void {
     });
   });
 
-  // El usuario elige reiniciar ahora — reemplaza el exe portable y relanza
+  // El usuario elige reiniciar ahora — lanza el nuevo exe como instalador y se cierra
   ipcMain.handle('install-update-now', () => {
-    installViaScript(onLog);
+    installViaUpdateMode(onLog);
   });
 
   const check = (): void => {

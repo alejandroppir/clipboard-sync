@@ -5,6 +5,30 @@ import {restartSync, stopSync, isRunning} from './sync';
 
 let win: BrowserWindow | null = null;
 
+export function createUpdateWindow(): BrowserWindow {
+  const updateWin = new BrowserWindow({
+    width: 300,
+    height: 200,
+    frame: false,
+    resizable: false,
+    center: true,
+    skipTaskbar: false,
+    alwaysOnTop: true,
+    icon: path.join(__dirname, '../../assets/logo.ico'),
+    backgroundColor: '#141414',
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+    },
+  });
+  updateWin.loadFile(path.join(__dirname, '../renderer/update.html'));
+  updateWin.setMenuBarVisibility(false);
+  updateWin.once('ready-to-show', () => updateWin.show());
+  return updateWin;
+}
+
 function createSplashWindow(): BrowserWindow {
   const splash = new BrowserWindow({
     width: 300,

@@ -7,7 +7,7 @@
   "license": "ISC",
   "scripts": {
     "generate-icon": "node scripts/generate-icon.mjs",
-    "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json && node -e \"const fs=require('fs');fs.mkdirSync('dist/renderer',{recursive:true});fs.copyFileSync('src/renderer/settings.html','dist/renderer/settings.html');fs.copyFileSync('src/renderer/settings.css','dist/renderer/settings.css');fs.copyFileSync('src/renderer/splash.html','dist/renderer/splash.html');\"",
+    "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json && node -e \"const fs=require('fs');fs.mkdirSync('dist/renderer',{recursive:true});fs.copyFileSync('src/renderer/settings.html','dist/renderer/settings.html');fs.copyFileSync('src/renderer/settings.css','dist/renderer/settings.css');fs.copyFileSync('src/renderer/splash.html','dist/renderer/splash.html');fs.copyFileSync('src/renderer/update.html','dist/renderer/update.html');\"",
     "dev": "npm run build && electron .",
     "package": "npm run build && electron-builder --win portable",
     "release": "npm run build && electron-builder --win portable --publish always"

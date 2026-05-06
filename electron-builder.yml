@@ -18,6 +18,7 @@ win:
   signAndEditExecutable: false
 portable:
   artifactName: ClipboardSync.exe
+  splashImage: resources/loading.bmp
 publish:
   provider: github
   owner: alejandroppir
