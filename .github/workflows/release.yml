@@ -1,5 +1,4 @@
 name: Release
-
 on:
   workflow_dispatch:
     inputs:
@@ -12,7 +11,6 @@ on:
         required: false
         default: 'Clipboard Sync'
         type: string
-
 jobs:
   release:
     runs-on: windows-latest
@@ -20,18 +18,15 @@ jobs:
       contents: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
     steps:
       # ── Checkout ────────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
       # ── Bump version in package.json ────────────────────────────────────────
       - name: Set version in package.json
         run: npm version ${{ github.event.inputs.version }} --no-git-tag-version --allow-same-version
-
       # ── Create and push tag ─────────────────────────────────────────────────
       - name: Create and push tag
         shell: pwsh
@@ -40,29 +35,36 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag "v${{ github.event.inputs.version }}"
           git push origin "v${{ github.event.inputs.version }}"
-
       # ── Node.js setup ───────────────────────────────────────────────────────
       - name: Set up Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
-
       - name: Install Node dependencies
         run: npm ci
-
       # ── Build TypeScript ────────────────────────────────────────────────────
       - name: Build TypeScript
         run: npm run build
-
       # ── Package with electron-builder ───────────────────────────────────────
       - name: Package Electron app
         run: npx electron-builder --win portable --publish always --config.productName="${{ github.event.inputs.appName }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
-
-      # ── Generar y subir latest.yml (portable no lo genera automáticamente) ──
+      # ── Reempaquetar como .custom para evitar bloqueos de red ───────────────
+      - name: Repackage as .custom
+        shell: pwsh
+        run: |
+          $exe = "dist-release\ClipboardSync.exe"
+          $zip = "dist-release\ClipboardSync.zip"
+          $custom = "dist-release\ClipboardSync.custom"
+          Compress-Archive -Path $exe -DestinationPath $zip
+          Rename-Item -Path $zip -NewName "ClipboardSync.custom"
+          gh release upload "v${{ github.event.inputs.version }}" $custom --repo alejandroppir/clipboard-sync --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # ── Generar y subir latest.yml ──────────────────────────────────────────
       - name: Generate and upload latest.yml
         shell: pwsh
         run: |
