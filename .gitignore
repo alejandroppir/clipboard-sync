@@ -19,6 +19,7 @@ clipboard-sync-win.zip
 
 # Zip archives (generated in CI)
 *.zip
+!release/*.zip
 
 # NOTE: assets/logo.ico is intentionally committed (generated once from logo.svg)
 
