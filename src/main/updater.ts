@@ -4,6 +4,7 @@ import {spawn} from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import AdmZip from 'adm-zip';
 import {getSettingsWindow} from './window';
 
 const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000; // cada 4 horas
@@ -21,13 +22,38 @@ function installViaUpdateMode(onLog: (line: string) => void): void {
     return;
   }
 
-  const exeSource = downloadedFilePath;
+  const customFile = downloadedFilePath;
+  const extractDir = path.join(os.tmpdir(), `ClipboardSync-update-${Date.now()}`);
+
+  try {
+    fs.mkdirSync(extractDir, {recursive: true});
+  } catch (err) {
+    onLog(`❌ No se pudo crear el directorio temporal: ${(err as Error).message}`);
+    return;
+  }
+
+  try {
+    onLog('📦 Descomprimiendo la actualización...');
+    const zip = new AdmZip(customFile);
+    zip.extractAllTo(extractDir, true); // true = sobrescribir si existe
+  } catch (err) {
+    onLog(`❌ Error al descomprimir la actualización: ${(err as Error).message}`);
+    return;
+  }
+
+  // Ahora buscamos el ejecutable extraído
+  const exeSource = path.join(extractDir, 'ClipboardSync.exe');
+
+  if (!fs.existsSync(exeSource)) {
+    onLog(`❌ El ejecutable no se encontró tras descomprimir.`);
+    return;
+  }
+
   // process.execPath apunta al exe extraído en temp, no al portable original.
   // electron-builder inyecta PORTABLE_EXECUTABLE_FILE con la ruta real del exe del usuario.
   const exeTarget = process.env['PORTABLE_EXECUTABLE_FILE'] ?? process.execPath;
 
   // Copiamos el nuevo exe a un path temporal propio para que actúe como instalador.
-  // Ese proceso corre desde su propio %TEMP%, por lo que puede sobrescribir exeTarget libremente.
   const setupExe = path.join(os.tmpdir(), `ClipboardSync-setup-${Date.now()}.exe`);
 
   try {

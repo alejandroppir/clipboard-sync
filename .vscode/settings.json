@@ -11,5 +11,6 @@
   },
   "hide-files.files": [],
   "explorer.excludeGitIgnore": true,
-  "git.addAICoAuthor": "off"
+  "git.addAICoAuthor": "off",
+  "i18n-ally.localesPaths": ["dist-release/win-unpacked/locales"]
 }

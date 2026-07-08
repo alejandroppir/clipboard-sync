@@ -68,14 +68,14 @@ jobs:
       - name: Generate and upload latest.yml
         shell: pwsh
         run: |
-          $exe = "dist-release\ClipboardSync.exe"
-          $bytes = [System.IO.File]::ReadAllBytes($exe)
+          $custom = "dist-release\ClipboardSync.custom"
+          $bytes = [System.IO.File]::ReadAllBytes($custom)
           $sha512 = [System.Security.Cryptography.SHA512]::Create().ComputeHash($bytes)
           $sha512b64 = [Convert]::ToBase64String($sha512)
-          $size = (Get-Item $exe).Length
+          $size = (Get-Item $custom).Length
           $date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
           $version = "${{ github.event.inputs.version }}"
-          $yaml = "version: $version`nfiles:`n  - url: ClipboardSync.exe`n    sha512: $sha512b64`n    size: $size`npath: ClipboardSync.exe`nsha512: $sha512b64`nreleaseDate: '$date'"
+          $yaml = "version: $version`nfiles:`n  - url: ClipboardSync.custom`n    sha512: $sha512b64`n    size: $size`npath: ClipboardSync.custom`nsha512: $sha512b64`nreleaseDate: '$date'"
           $yaml | Out-File -FilePath "dist-release\latest.yml" -Encoding utf8NoBOM
           gh release upload "v$version" "dist-release\latest.yml" --repo alejandroppir/clipboard-sync --clobber
         env:
