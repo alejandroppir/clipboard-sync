@@ -666,3 +666,111 @@ body {
   gap: 8px;
   justify-content: flex-end;
 }
+
+/* ── Admin Tabs & Icons ── */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 4px;
+}
+
+.admin-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  transition:
+    background var(--transition),
+    color var(--transition);
+}
+
+.admin-tab-btn:hover {
+  background: var(--bg2);
+  color: var(--text);
+}
+
+.admin-tab-btn.active {
+  background: var(--bg2);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.admin-tab-content {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.admin-tab-content.active {
+  display: flex;
+}
+
+.admin-list-container {
+  background: var(--bg);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  max-height: 250px;
+  overflow-y: auto;
+  color: var(--text);
+  border: 1px solid var(--border-subtle);
+}
+
+.admin-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-list-item:last-child {
+  border-bottom: none;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.1s,
+    color 0.1s;
+}
+
+.icon-btn:hover {
+  background: var(--bg2);
+  color: var(--text);
+}
+.icon-btn.edit:hover {
+  color: var(--accent);
+}
+.icon-btn.delete:hover {
+  color: var(--error);
+}
+.icon-btn.copy:hover {
+  color: var(--accent);
+}
+
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+input,
+textarea {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}

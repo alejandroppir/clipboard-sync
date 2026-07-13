@@ -1,7 +1,17 @@
 import path from 'path';
 import {BrowserWindow, ipcMain, nativeTheme, app} from 'electron';
 import {loadConfig, saveConfig} from './config';
-import {restartSync, stopSync, isRunning} from './sync';
+import {
+  restartSync,
+  stopSync,
+  isRunning,
+  validateAdmin,
+  getUsersList,
+  sendAdminNotification,
+  markNotificationRead,
+  getNotificationsList,
+  deleteAdminNotification,
+} from './sync';
 
 let win: BrowserWindow | null = null;
 
@@ -84,10 +94,9 @@ export function createSettingsWindow(onLog: (line: string) => void, onReady?: ()
   nativeTheme.themeSource = 'dark';
 
   const splash = createSplashWindow();
-  const SPLASH_MIN_MS = 1500; // mínimo visible aunque la app cargue rápido
+  const SPLASH_MIN_MS = 1500;
   const splashStart = Date.now();
 
-  // Mostrar splash en cuanto esté listo, y cargar la ventana principal en paralelo
   splash.once('ready-to-show', () => splash.show());
 
   win = createMainWindow();
@@ -114,9 +123,7 @@ export function getSettingsWindow(): BrowserWindow | null {
 }
 
 export function registerIpcHandlers(onLog: (line: string) => void): void {
-  ipcMain.handle('get-config', () => {
-    return loadConfig();
-  });
+  ipcMain.handle('get-config', () => loadConfig());
 
   ipcMain.handle('set-userid', (_event, userId: string) => {
     if (!userId || typeof userId !== 'string' || userId.trim() === '') return;
@@ -134,11 +141,16 @@ export function registerIpcHandlers(onLog: (line: string) => void): void {
     getSettingsWindow()?.hide();
   });
 
-  ipcMain.handle('restart-sync', () => {
-    restartSync();
-  });
+  ipcMain.handle('restart-sync', () => restartSync());
+  ipcMain.handle('stop-sync', () => stopSync());
 
-  ipcMain.handle('stop-sync', () => {
-    stopSync();
+  ipcMain.handle('validate-admin', (_event, pass: string) => validateAdmin(pass));
+  ipcMain.handle('get-users', () => getUsersList());
+  ipcMain.handle('send-notification', (_event, target: string, msg: string) => sendAdminNotification(target, msg));
+  ipcMain.handle('mark-notification-read', async () => {
+    const config = loadConfig();
+    if (config?.userId) await markNotificationRead(config.userId);
   });
+  ipcMain.handle('get-notifications', () => getNotificationsList());
+  ipcMain.handle('delete-notification', (_event, id: string) => deleteAdminNotification(id));
 }

@@ -3,8 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- CSP: sin inline scripts, sin eval, sin remote resources -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
     <title>Clipboard Sync</title>
     <link rel="stylesheet" href="settings.css" />
   </head>
@@ -18,7 +17,6 @@
       <button id="btn-change-user" class="btn btn-ghost btn-sm">Cambiar</button>
     </div>
 
-    <!-- Banner de bienvenida -->
     <div id="tray-banner" class="tray-banner">
       <span class="tray-banner-msg"
         >📌 Clipboard Sync se ejecuta en la bandeja del sistema. Puedes cerrar esta ventana y la aplicación seguirá sincronizando.</span
@@ -26,12 +24,18 @@
       <button id="btn-tray-banner-dismiss" class="tray-banner-close" title="Cerrar">✕</button>
     </div>
 
-    <!-- Banda de actualización -->
     <div id="update-banner" class="update-banner hidden">
       <span id="update-banner-msg" class="update-banner-msg"></span>
       <div id="update-banner-actions">
         <button id="btn-update-confirm" class="btn btn-accent">Actualizar</button>
         <button id="btn-update-dismiss" class="btn btn-secondary">Ahora no</button>
+      </div>
+    </div>
+
+    <div id="notif-banner" class="update-banner hidden" style="background: #3b2a0c; border-bottom: 1px solid #d97706">
+      <span id="notif-banner-msg" class="update-banner-msg"></span>
+      <div id="notif-banner-actions" style="display: flex; gap: 6px; flex-shrink: 0">
+        <button id="btn-notif-dismiss" class="btn btn-secondary btn-sm">Entendido</button>
       </div>
     </div>
 
@@ -47,7 +51,6 @@
       <button id="btn-restart" class="btn btn-accent">Reiniciar</button>
     </div>
 
-    <!-- Diálogo userId -->
     <div id="userid-dialog" class="dialog-overlay hidden">
       <div class="dialog">
         <label for="userid-input">ID de usuario (email)</label>
@@ -55,6 +58,71 @@
         <div class="dialog-actions">
           <button id="dialog-cancel" class="btn btn-secondary">Cancelar</button>
           <button id="dialog-ok" class="btn btn-accent">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-dialog" class="dialog-overlay hidden">
+      <div class="dialog">
+        <label for="admin-pass">Contraseña Admin</label>
+        <input id="admin-pass" type="password" placeholder="***" autocomplete="off" />
+        <div class="dialog-actions">
+          <button id="admin-cancel" class="btn btn-secondary">Cancelar</button>
+          <button id="admin-ok" class="btn btn-accent">Entrar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-panel" class="dialog-overlay hidden">
+      <div class="dialog" style="width: 550px; max-height: 85vh; display: flex; flex-direction: column">
+        <h3 style="margin-bottom: 10px; color: var(--accent)">Panel de Control Admin</h3>
+
+        <div class="admin-tabs">
+          <button class="admin-tab-btn active" data-target="tab-users">Usuarios</button>
+          <button class="admin-tab-btn" data-target="tab-notifs">Notificaciones</button>
+        </div>
+
+        <div id="tab-users" class="admin-tab-content active">
+          <div id="admin-users-list" class="admin-list-container"></div>
+        </div>
+
+        <div id="tab-notifs" class="admin-tab-content">
+          <div
+            style="
+              margin-bottom: 12px;
+              padding: 12px;
+              background: var(--bg2);
+              border-radius: var(--radius-sm);
+              border: 1px solid var(--border-subtle);
+            "
+          >
+            <label style="display: block; margin-bottom: 6px; font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase"
+              >Nueva Notificación</label
+            >
+            <input
+              id="admin-notif-target"
+              type="text"
+              placeholder="global o userID"
+              style="margin-bottom: 8px"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <input
+              id="admin-notif-msg"
+              type="text"
+              placeholder="Mensaje de notificación..."
+              style="margin-bottom: 8px"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button id="btn-admin-send" class="btn btn-accent btn-sm">Guardar / Actualizar</button>
+          </div>
+
+          <div id="admin-notifs-list" class="admin-list-container"></div>
+        </div>
+
+        <div class="dialog-actions" style="margin-top: 15px">
+          <button id="btn-admin-close" class="btn btn-secondary">Cerrar Panel</button>
         </div>
       </div>
     </div>
