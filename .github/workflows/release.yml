@@ -72,23 +72,21 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Generar y subir latest.yml (COMENTADO PARA VERSIÓN PUENTE) ──────────
-      # Para esta versión, dejamos que electron-builder genere el latest.yml
-      # apuntando al .exe original. Descomenta este bloque para la SIGUIENTE release,
-      # cuando todos los usuarios ya tengan el código capaz de descomprimir el .custom.
-
-      # - name: Generate and upload latest.yml
-      #   shell: pwsh
-      #   run: |
-      #     $custom = "dist-release\ClipboardSync.custom"
-      #     $bytes = [System.IO.File]::ReadAllBytes($custom)
-      #     $sha512 = [System.Security.Cryptography.SHA512]::Create().ComputeHash($bytes)
-      #     $sha512b64 = [Convert]::ToBase64String($sha512)
-      #     $size = (Get-Item $custom).Length
-      #     $date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-      #     $version = "${{ github.event.inputs.version }}"
-      #     $yaml = "version: $version`nfiles:`n  - url: ClipboardSync.custom`n    sha512: $sha512b64`n    size: $size`npath: ClipboardSync.custom`nsha512: $sha512b64`nreleaseDate: '$date'"
-      #     $yaml | Out-File -FilePath "dist-release\latest.yml" -Encoding utf8NoBOM
-      #     gh release upload "v$version" "dist-release\latest.yml" --repo alejandroppir/clipboard-sync --clobber
-      #   env:
-      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # ── Generar y subir latest.yml (VERSIÓN PUENTE) ──────────
+      # Generamos el latest.yml manualmente apuntando al .exe original
+      # para que las versiones antiguas puedan descargar e instalar este puente.
+      - name: Generate and upload latest.yml
+        shell: pwsh
+        run: |
+          $exe = "dist-release\ClipboardSync.exe"
+          $bytes = [System.IO.File]::ReadAllBytes($exe)
+          $sha512 = [System.Security.Cryptography.SHA512]::Create().ComputeHash($bytes)
+          $sha512b64 = [Convert]::ToBase64String($sha512)
+          $size = (Get-Item $exe).Length
+          $date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+          $version = "${{ github.event.inputs.version }}"
+          $yaml = "version: $version`nfiles:`n  - url: ClipboardSync.exe`n    sha512: $sha512b64`n    size: $size`npath: ClipboardSync.exe`nsha512: $sha512b64`nreleaseDate: '$date'"
+          $yaml | Out-File -FilePath "dist-release\latest.yml" -Encoding utf8NoBOM
+          gh release upload "v$version" "dist-release\latest.yml" --repo ${{ github.repository }} --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
