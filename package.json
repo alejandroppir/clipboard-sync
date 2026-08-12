@@ -1,6 +1,6 @@
 {
   "name": "clipboard-sync",
-  "version": "1.0.3",
+  "version": "1.0.6",
   "description": "Sincronizador de portapapeles",
   "main": "dist/main/main.js",
   "author": "",
