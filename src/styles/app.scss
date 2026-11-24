@@ -1,0 +1,623 @@
+// Main window components. Layout (rows, columns, gaps) comes from the utilities in theme.scss.
+// Blocks nest their BEM elements and modifiers with `&`; values always come from the tokens.
+
+body {
+  overflow: hidden;
+
+  // While the first data loads, only the dots are shown.
+  > .loader {
+    position: fixed;
+    inset: 0;
+  }
+
+  &:not(.is-loading) > .loader,
+  &.is-loading > .app {
+    display: none;
+  }
+}
+
+.app {
+  height: 100vh;
+  animation: rise var(--duration-slow) var(--ease-out);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-1));
+  }
+}
+
+// Raised panels share one surface: border, faint top highlight, soft shadow.
+.sync-panel,
+.activity,
+.banner,
+.dialog {
+  border: var(--line);
+  border-radius: var(--radius-lg);
+  background-color: var(--surface);
+  box-shadow: var(--highlight), var(--shadow-sm);
+}
+
+// ── Chips: update pill, message state ──
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--chip);
+  padding: 0 var(--space-3);
+  border: var(--line);
+  border-radius: var(--radius-full);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+
+  &--sm {
+    height: var(--chip-sm);
+    padding: 0 var(--space-2);
+    font-size: var(--text-xs);
+  }
+
+  &--accent {
+    color: var(--accent);
+  }
+}
+
+button.chip {
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-3);
+    color: var(--text);
+  }
+}
+
+// ── Sync panel: the state of the app at a glance ──
+.sync-panel {
+  margin: var(--space-3) var(--space-5) 0;
+  overflow: hidden;
+  transition: border-color var(--duration-slow) var(--ease-out);
+
+  &__status {
+    padding: var(--space-4);
+  }
+
+  &__settings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: var(--line);
+  }
+
+  &[data-state="error"] {
+    border-color: var(--danger-line);
+  }
+
+  &__state {
+    font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  &__detail {
+    color: var(--text-muted);
+
+    [data-state="error"] & {
+      color: var(--danger);
+    }
+  }
+}
+
+// One setting of the sync panel: the whole cell is the button that changes it.
+.setting {
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+
+  & + & {
+    border-left: var(--line);
+  }
+
+  &:hover {
+    background: var(--surface-2);
+  }
+
+  // Inside: the panel cuts what sticks out of its rounded corners.
+  &:focus-visible {
+    border-radius: var(--radius-lg);
+    outline-offset: -2px;
+  }
+
+  &__icon,
+  &__edit,
+  &__label {
+    color: var(--text-dim);
+  }
+
+  &__label {
+    font-size: var(--text-sm);
+  }
+
+  &__value {
+    font-weight: var(--weight-medium);
+  }
+
+  &:hover &__edit {
+    color: var(--text);
+  }
+
+  &--on &__icon {
+    color: var(--accent);
+  }
+}
+
+// State icon: one of three glyphs on a neutral disc; only the glyph takes the state colour.
+.orb {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--orb);
+  height: var(--orb);
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--text-dim);
+
+  &__icon {
+    display: none;
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+
+    [data-state="connecting"] & {
+      animation: spin 1.4s linear infinite;
+    }
+  }
+
+  [data-state="running"] &__icon--sync,
+  [data-state="connecting"] &__icon--sync,
+  [data-state="disabled"] &__icon--pause,
+  [data-state="paused"] &__icon--pause,
+  [data-state="error"] &__icon--error {
+    display: block;
+  }
+
+  [data-state="running"] & {
+    color: var(--accent);
+  }
+
+  [data-state="connecting"] &,
+  [data-state="paused"] & {
+    color: var(--warning);
+  }
+
+  [data-state="error"] & {
+    color: var(--danger);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+// ── Buttons ──
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control);
+  padding: 0 var(--space-4);
+  border: var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--surface-3);
+    color: var(--text);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &--sm {
+    height: var(--control-sm);
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  &--ghost {
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-muted);
+  }
+
+  // After `&:hover`: same specificity, so these must come later to win.
+  &--accent {
+    border-color: transparent;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: var(--weight-bold);
+    box-shadow: var(--highlight);
+
+    &:hover {
+      background: var(--accent-hover);
+      color: var(--on-accent);
+    }
+
+    &:active {
+      background: var(--accent-pressed);
+    }
+  }
+
+  &--danger:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--control-sm);
+  height: var(--control-sm);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+
+  &:hover {
+    background: var(--surface-3);
+    color: var(--text);
+  }
+
+  &--danger:hover,
+  &--confirm {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  &--done {
+    color: var(--accent);
+  }
+}
+
+// ── Banners ──
+.banners {
+  padding: var(--space-3) var(--space-5) 0;
+
+  &:not(:has(> :not([hidden]))) {
+    display: none;
+  }
+}
+
+.banner {
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+  color: var(--text-muted);
+  animation: rise var(--duration-slow) var(--ease-out);
+
+  &__icon {
+    color: var(--text-dim);
+  }
+
+  &--accent,
+  &--warning {
+    color: var(--text);
+  }
+
+  &--accent &__icon {
+    color: var(--accent);
+  }
+
+  &--warning &__icon {
+    color: var(--warning);
+  }
+}
+
+.progress {
+  width: 100%;
+  height: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  appearance: none;
+
+  &::-webkit-progress-bar {
+    background: var(--surface-3);
+  }
+
+  &::-webkit-progress-value {
+    background: var(--accent);
+    transition: width var(--duration-slow) var(--ease-out);
+  }
+}
+
+// ── Activity ──
+.activity {
+  margin: var(--space-3) var(--space-5);
+  overflow: hidden;
+
+  &__bar {
+    padding: var(--space-3) var(--space-4) var(--space-1) var(--space-3);
+  }
+
+  &__version {
+    color: var(--text-dim);
+    font: var(--text-xs) var(--mono);
+    user-select: none;
+  }
+
+  &__list {
+    padding: 0 var(--space-2) var(--space-2);
+    overflow-y: auto;
+    user-select: text;
+  }
+
+  // The list and its empty state replace each other.
+  &__list:empty,
+  &__list:not(:empty) + &__empty {
+    display: none;
+  }
+}
+
+.empty {
+  margin: auto;
+  padding: var(--space-4);
+  color: var(--text-dim);
+  text-align: center;
+
+  &__icon {
+    width: var(--icon-xl);
+    height: var(--icon-xl);
+    margin-bottom: var(--space-1);
+    stroke-width: 1.5;
+  }
+}
+
+.log-entry {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+
+  &:hover {
+    background: var(--surface-2);
+  }
+
+  &:last-child {
+    animation: rise var(--duration-slow) var(--ease-out);
+  }
+
+  &__icon {
+    color: var(--text-dim);
+
+    [data-type="success"] & {
+      color: var(--accent);
+    }
+
+    [data-type="warning"] & {
+      color: var(--warning);
+    }
+
+    [data-type="error"] & {
+      color: var(--danger);
+    }
+  }
+
+  &__time {
+    flex-shrink: 0;
+    color: var(--text-dim);
+    font: var(--text-xs) var(--mono);
+  }
+}
+
+// ── Footer ──
+.footer {
+  padding: 0 var(--space-5) var(--space-3);
+  color: var(--text-muted);
+}
+
+// ── Switch ──
+.switch {
+  --size: var(--chip-sm);
+  --knob: calc(var(--size) - 3 * var(--space-0));
+  cursor: pointer;
+  user-select: none;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &__track {
+    position: relative;
+    width: calc(var(--size) + var(--knob));
+    height: var(--size);
+    border: var(--line-strong);
+    border-radius: var(--radius-full);
+    background: var(--surface-3);
+    transition: background-color var(--duration) var(--ease-out);
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: var(--space-0);
+      left: var(--space-0);
+      width: var(--knob);
+      height: var(--knob);
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: transform var(--duration) var(--ease-out);
+    }
+  }
+
+  & input:checked + &__track {
+    border-color: transparent;
+    background: var(--accent);
+
+    &::after {
+      transform: translateX(var(--knob));
+      background: var(--on-accent);
+    }
+  }
+
+  & input:focus-visible + &__track {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+// ── Dialogs ──
+.dialog {
+  width: min(var(--dialog), calc(100vw - 2 * var(--space-4)));
+  margin: auto;
+  padding: 0;
+  border-color: var(--border-strong);
+  color: var(--text);
+  box-shadow: var(--highlight), var(--shadow);
+
+  &--wide {
+    width: min(var(--dialog-wide), calc(100vw - 2 * var(--space-4)));
+  }
+
+  &[open] {
+    animation: rise var(--duration-slow) var(--ease-out);
+  }
+
+  &::backdrop {
+    background: var(--backdrop);
+  }
+
+  &__body {
+    max-height: calc(100vh - 4 * var(--space-4));
+    padding: var(--space-5);
+  }
+
+  // What scrolls when the dialog does not fit: the title and the buttons stay in sight.
+  &__scroll {
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+.field__label {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.input {
+  width: 100%;
+  height: var(--control);
+  padding: 0 var(--space-3);
+  border: var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  transition: border-color var(--duration) var(--ease-out);
+
+  &::placeholder {
+    color: var(--text-dim);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  // After `&:focus`, so an invalid field stays red while typing.
+  &[aria-invalid="true"] {
+    border-color: var(--danger);
+  }
+
+  &--area {
+    height: auto;
+    padding: var(--space-2) var(--space-3);
+    resize: vertical;
+  }
+}
+
+// ── Tabs (activity / history, admin panel) ──
+.tabs {
+  align-self: flex-start;
+  padding: var(--space-1);
+  border-radius: var(--radius);
+  background: var(--bg);
+
+  &__tab {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-weight: var(--weight-medium);
+
+    &[aria-selected="true"] {
+      background: var(--surface-3);
+      color: var(--text);
+    }
+  }
+}
+
+// ── Lists: admin panel, history ──
+.composer {
+  padding: var(--space-4);
+  border: var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.list-item {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+
+  &:hover {
+    background: var(--surface-2);
+  }
+
+  &__title {
+    font-weight: var(--weight-medium);
+  }
+}
+
+// A few lines of a long text, keeping its line breaks.
+.history__text,
+.error-row__trace {
+  display: -webkit-box;
+  overflow: hidden;
+  white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.error-row__trace {
+  color: var(--text-muted);
+  font: var(--text-xs) / 1.45 var(--mono);
+  -webkit-line-clamp: 4;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--avatar);
+  height: var(--avatar);
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--text-muted);
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+}
+
+// ── Release notes ──
+.notes {
+  padding-left: var(--space-5);
+  list-style: disc;
+
+  ::marker {
+    color: var(--text-dim);
+  }
+}

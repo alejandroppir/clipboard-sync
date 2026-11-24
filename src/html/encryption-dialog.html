@@ -1,0 +1,26 @@
+<dialog class="dialog" id="encryption-dialog" aria-labelledby="encryption-title">
+  <form class="dialog__body vstack gap-4" id="encryption-form" method="dialog">
+    <div class="vstack gap-1">
+      <h2 class="title" id="encryption-title">Cifrar el contenido</h2>
+      <p class="muted">Lo que copias viaja y se guarda cifrado. Solo lo leen los equipos que tienen la misma contraseña.</p>
+    </div>
+    <div class="banner banner--warning hstack gap-3">
+      <svg class="icon banner__icon" aria-hidden="true"><use href="#icon-warning" /></svg>
+      <div class="vstack gap-1 grow">
+        <p>Todos los equipos necesitan la versión 2.0.0 o superior.</p>
+        <p>Todos necesitan la misma contraseña: los demás dejarán de sincronizarse con este.</p>
+      </div>
+    </div>
+    <label class="field vstack gap-1">
+      <span class="field__label" id="encryption-label">Contraseña</span>
+      <input class="input" id="encryption-password" type="password" autocomplete="off" required />
+      <span class="error small" id="encryption-error" role="alert" hidden></span>
+    </label>
+    <div class="hstack">
+      <button type="button" class="btn btn--ghost btn--danger" id="encryption-remove">Quitar cifrado</button>
+      <span class="grow"></span>
+      <button type="button" class="btn btn--ghost" id="encryption-cancel">Cancelar</button>
+      <button type="submit" class="btn btn--accent" id="encryption-save">Cifrar</button>
+    </div>
+  </form>
+</dialog>

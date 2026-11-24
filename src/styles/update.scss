@@ -1,0 +1,6 @@
+// "Updating…" window. The layout comes from the utility classes in update.html.
+.updating {
+  height: 100vh;
+  border: var(--line);
+  user-select: none;
+}

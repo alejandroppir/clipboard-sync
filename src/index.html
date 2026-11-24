@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClipSync</title>
+    <link rel="stylesheet" href="/styles/theme.scss" />
+    <link rel="stylesheet" href="/styles/app.scss" />
+    <script type="module" src="/main.ts"></script>
+  </head>
+
+  <body class="is-loading">
+    {{> icons}}
+
+    <div class="loader hstack center" aria-hidden="true">
+      <span class="loader__dot"></span><span class="loader__dot"></span><span class="loader__dot"></span>
+    </div>
+
+    <div class="app vstack gap-0">
+      <section class="sync-panel" id="sync-panel" data-state="disabled" aria-labelledby="status-text">
+        <div class="sync-panel__status hstack gap-4">
+          <div class="orb" aria-hidden="true">
+            <svg class="icon orb__icon orb__icon--sync"><use href="#icon-sync" /></svg>
+            <svg class="icon orb__icon orb__icon--pause"><use href="#icon-pause" /></svg>
+            <svg class="icon orb__icon orb__icon--error"><use href="#icon-warning" /></svg>
+          </div>
+          <div class="vstack gap-0 grow">
+            <h1 class="sync-panel__state" id="status-text" role="status">Desactivada</h1>
+            <p class="sync-panel__detail" id="status-detail"></p>
+          </div>
+          <button type="button" class="icon-btn" id="restart-sync" aria-label="Reiniciar sincronización" title="Reiniciar sincronización">
+            <svg class="icon" aria-hidden="true"><use href="#icon-sync" /></svg>
+          </button>
+          <button type="button" class="btn btn--accent" id="resume-sync" hidden>Reanudar</button>
+          <label class="switch hstack" title="Activar o desactivar la sincronización">
+            <input type="checkbox" role="switch" id="sync-enabled" aria-label="Sincronizar" />
+            <span class="switch__track" aria-hidden="true"></span>
+          </label>
+        </div>
+
+        <div class="sync-panel__settings">
+          <button type="button" class="setting hstack gap-3" id="change-user" title="Cambiar usuario">
+            <svg class="icon setting__icon" aria-hidden="true"><use href="#icon-user" /></svg>
+            <span class="vstack gap-0 grow">
+              <span class="setting__label">Usuario</span>
+              <span class="setting__value truncate" id="user-id"></span>
+            </span>
+            <svg class="icon icon--sm setting__edit" aria-hidden="true"><use href="#icon-edit" /></svg>
+          </button>
+          <button type="button" class="setting hstack gap-3" id="encryption" title="Cifrar el contenido">
+            <svg class="icon setting__icon" aria-hidden="true"><use href="#icon-lock" /></svg>
+            <span class="vstack gap-0 grow">
+              <span class="setting__label">Cifrado</span>
+              <span class="setting__value truncate" id="encryption-state"></span>
+            </span>
+            <svg class="icon icon--sm setting__edit" aria-hidden="true"><use href="#icon-edit" /></svg>
+          </button>
+        </div>
+      </section>
+
+      <section class="banners vstack">
+        <div class="banner hstack gap-3" id="tray-banner" hidden>
+          <svg class="icon banner__icon" aria-hidden="true"><use href="#icon-info" /></svg>
+          <span class="grow">La aplicación sigue sincronizando en la bandeja del sistema aunque cierres esta ventana.</span>
+          <button type="button" class="icon-btn" id="tray-banner-dismiss" aria-label="Cerrar aviso">
+            <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
+          </button>
+        </div>
+
+        <div class="banner banner--accent hstack gap-3" id="update-banner" hidden>
+          <svg class="icon banner__icon" aria-hidden="true"><use href="#icon-download" /></svg>
+          <div class="vstack grow">
+            <span id="update-message"></span>
+            <progress class="progress" id="update-progress" max="100" value="0" hidden></progress>
+          </div>
+          <div class="hstack" id="update-actions">
+            <button type="button" class="btn btn--ghost btn--sm" id="update-dismiss"></button>
+            <button type="button" class="btn btn--sm" id="update-notes" hidden>Novedades</button>
+            <button type="button" class="btn btn--accent btn--sm" id="update-confirm"></button>
+          </div>
+        </div>
+
+        <div class="banner banner--warning hstack gap-3" id="notification-banner" hidden>
+          <svg class="icon banner__icon" aria-hidden="true"><use href="#icon-message" /></svg>
+          <span class="grow" id="notification-message"></span>
+          <button type="button" class="btn btn--sm" id="notification-dismiss">Entendido</button>
+        </div>
+      </section>
+
+      <main class="activity vstack gap-0 grow">
+        <div class="activity__bar hstack">
+          <div class="tabs hstack gap-1" role="tablist">
+            <button type="button" class="tabs__tab" role="tab" id="tab-activity" aria-controls="panel-activity" aria-selected="true">Actividad</button>
+            <button type="button" class="tabs__tab" role="tab" id="tab-history" aria-controls="panel-history" aria-selected="false">Historial</button>
+          </div>
+          <span class="grow"></span>
+          <button type="button" class="chip chip--accent" id="update-pill" hidden>
+            <svg class="icon icon--sm" aria-hidden="true"><use href="#icon-download" /></svg>
+            <span id="update-pill-text"></span>
+          </button>
+          <!-- Three clicks here open the admin login. -->
+          <span class="activity__version" id="app-version"></span>
+        </div>
+
+        <section class="vstack gap-0 grow" id="panel-activity" role="tabpanel" aria-labelledby="tab-activity">
+          <ol class="activity__list grow" id="log-list"></ol>
+          <div class="activity__empty empty vstack center">
+            <svg class="icon empty__icon" aria-hidden="true"><use href="#icon-clipboard" /></svg>
+            <p>Todavía no hay actividad.</p>
+            <p class="small">Lo que copies aquí o en tus otros equipos aparecerá en esta lista.</p>
+          </div>
+        </section>
+
+        <section class="vstack gap-0 grow" id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+          <ol class="activity__list grow" id="history-list"></ol>
+          <div class="activity__empty empty vstack center">
+            <svg class="icon empty__icon" aria-hidden="true"><use href="#icon-copy" /></svg>
+            <p>Todavía no se ha sincronizado nada.</p>
+            <p class="small">Aquí verás los últimos 20 textos. Solo están en memoria: se borran al cerrar la aplicación.</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer hstack wrap">
+        <label class="switch hstack small">
+          <input type="checkbox" role="switch" id="autostart" />
+          <span class="switch__track" aria-hidden="true"></span>
+          Arrancar con Windows
+        </label>
+        <span class="grow"></span>
+        <button type="button" class="btn btn--ghost btn--sm" id="hide">Ocultar en la bandeja</button>
+        <button type="button" class="btn btn--ghost btn--sm" id="restart-app">Reiniciar aplicación</button>
+        <button type="button" class="btn btn--ghost btn--sm btn--danger" id="quit">Salir</button>
+      </footer>
+    </div>
+
+    {{> user-dialog}}
+
+    {{> encryption-dialog}}
+
+    {{> admin-panel}}
+
+    {{> release-notes}}
+
+    {{> templates}}
+  </body>
+</html>

@@ -1,0 +1,48 @@
+[package]
+name = "clipboard-sync"
+version = "2.0.0"
+description = "ClipSync"
+authors = ["alejandroppir"]
+edition = "2024"
+
+[lib]
+# The `_lib` suffix avoids a name clash between the lib and the bin on Windows (cargo#8519).
+name = "clipboard_sync_lib"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-single-instance = "2"
+# Typed IPC: still a release candidate, so versions are pinned exactly.
+tauri-specta = { version = "=2.0.0-rc.26", features = ["derive", "typescript"] }
+specta = { version = "=2.0.0-rc.26", features = ["derive"] }
+specta-typescript = "=0.0.13"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+firestore = "0.63"
+tokio = { version = "1", features = ["sync", "time", "macros"] }
+auto-launch = "0.6"
+strum = { version = "0.28", features = ["derive"] }
+# clipboard-master announces the changes; arboard reads and writes.
+clipboard-master = "4"
+arboard = { version = "3", default-features = false }
+jiff = "0.2"
+# sha2 and reqwest match the versions firestore already pulls in, so they are compiled once.
+sha2 = "0.11"
+minisign-verify = "0.2"
+zip = { version = "9", default-features = false, features = ["deflate"] }
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "stream", "system-proxy", "http2"] }
+futures-util = "0.3"
+base64 = "0.22"
+semver = "1"
+chacha20poly1305 = "0.11"
+argon2 = "0.6"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

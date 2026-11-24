@@ -1,92 +1,76 @@
 name: Release
+
+# Builds, signs and publishes a version. See docs/publicar-version.md.
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. 1.2.3 — without the "v" prefix)'
+        description: "Versión, sin la v (ej. 2.0.1)"
         required: true
         type: string
       appName:
-        description: 'Nombre de la aplicación (ej: Clipboard Sync, Dev Utils...)'
+        description: "Nombre visible de la aplicación. Vacío = el de tauri.conf.json"
         required: false
-        default: 'Clipboard Sync'
+        default: ""
         type: string
+
 jobs:
   release:
     runs-on: windows-latest
     permissions:
       contents: write
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+      # Repository the installed apps check for updates. It must be this one unless the code moves.
+      RELEASE_REPO: alejandroppir/clipboard-sync
+      # As variables, never inside a script: their text would be run as code.
+      RELEASE_VERSION: ${{ inputs.version }}
+      APP_NAME: ${{ inputs.appName }}
     steps:
-      # ── Checkout ────────────────────────────────────────────────────────────
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      # ── Bump version in package.json ────────────────────────────────────────
-      - name: Set version in package.json
-        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version --allow-same-version
-
-      # ── Create and push tag ─────────────────────────────────────────────────
-      - name: Create and push tag
+      # Before building, which takes minutes. An existing tag would be reused as it is, pointing at other code.
+      - name: Check that the version is not published
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "v${{ github.event.inputs.version }}"
-          git push origin "v${{ github.event.inputs.version }}"
+          $tags = gh api "repos/$env:RELEASE_REPO/git/matching-refs/tags/v$env:RELEASE_VERSION" --jq '.[].ref'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($tags -contains "refs/tags/v$env:RELEASE_VERSION") { throw "The tag v$env:RELEASE_VERSION already exists." }
 
-      # ── Node.js setup ───────────────────────────────────────────────────────
-      - name: Set up Node.js 24
-        uses: actions/setup-node@v4
+      # Pinned to a commit: a tag can be moved to other code, which would run next to the signing key.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: "24"
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          # The build output is in the root `target/` (src-tauri/.cargo/config.toml).
+          workspaces: "src-tauri -> ../target"
 
       - name: Install Node dependencies
         run: npm ci
 
-      # ── Build TypeScript ────────────────────────────────────────────────────
-      - name: Build TypeScript
-        run: npm run build
-
-      # ── Package with electron-builder ───────────────────────────────────────
-      - name: Package Electron app
-        run: npx electron-builder --win portable --publish always --config.productName="${{ github.event.inputs.appName }}"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-
-      # ── Reempaquetar como .custom para evitar bloqueos de red ───────────────
-      - name: Repackage as .custom
+      - name: Build, sign and package
         shell: pwsh
-        run: |
-          $exe = "dist-release\ClipboardSync.exe"
-          $zip = "dist-release\ClipboardSync.zip"
-          $custom = "dist-release\ClipboardSync.custom"
-          Compress-Archive -Path $exe -DestinationPath $zip
-          Rename-Item -Path $zip -NewName "ClipboardSync.custom"
-          gh release upload "v${{ github.event.inputs.version }}" $custom --repo alejandroppir/clipboard-sync --clobber
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: ./scripts/package-release.ps1 -Version $env:RELEASE_VERSION -AppName $env:APP_NAME
 
-      # ── Generar y subir latest.yml (VERSIÓN DEFINITIVA) ──────────
-      # Generamos el latest.yml apuntando al .custom para que la app
-      # lo descargue y lo descomprima internamente.
-      - name: Generate and upload latest.yml
+      - name: Publish the GitHub release
         shell: pwsh
-        run: |
-          $custom = "dist-release\ClipboardSync.custom"
-          $bytes = [System.IO.File]::ReadAllBytes($custom)
-          $sha512 = [System.Security.Cryptography.SHA512]::Create().ComputeHash($bytes)
-          $sha512b64 = [Convert]::ToBase64String($sha512)
-          $size = (Get-Item $custom).Length
-          $date = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-          $version = "${{ github.event.inputs.version }}"
-          $yaml = "version: $version`nfiles:`n  - url: ClipboardSync.custom`n    sha512: $sha512b64`n    size: $size`npath: ClipboardSync.custom`nsha512: $sha512b64`nreleaseDate: '$date'"
-          $yaml | Out-File -FilePath "dist-release\latest.yml" -Encoding utf8NoBOM
-          gh release upload "v$version" "dist-release\latest.yml" --repo ${{ github.repository }} --clobber
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Another repository needs a token with access to it (secret RELEASE_TOKEN).
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "v$env:RELEASE_VERSION"
+          # One by one: PowerShell does not expand `release/*` for other programs.
+          $files = (Get-ChildItem release -File).FullName
+          $arguments = @($tag) + $files + @("--repo", $env:RELEASE_REPO, "--title", $tag, "--notes-file", ".github/release-notes.md", "--latest")
+          # The tag points at the built commit only when it lives in the same repository.
+          if ($env:RELEASE_REPO -eq $env:GITHUB_REPOSITORY) { $arguments += @("--target", $env:GITHUB_SHA) }
+          gh release create @arguments

@@ -1,0 +1,17 @@
+<dialog class="dialog" id="user-dialog" aria-labelledby="user-dialog-title">
+  <form class="dialog__body vstack gap-4" id="user-form" method="dialog">
+    <div class="vstack gap-1">
+      <h2 class="title" id="user-dialog-title">Identificador de usuario</h2>
+      <p class="muted">Usa el mismo en todos los equipos que quieras sincronizar.</p>
+    </div>
+    <label class="field vstack gap-1">
+      <span class="field__label">Identificador</span>
+      <input class="input" id="user-input" type="text" placeholder="nombre@ejemplo.com" autocomplete="off" spellcheck="false" required />
+      <span class="error small" id="user-error" role="alert" hidden></span>
+    </label>
+    <div class="hstack end">
+      <button type="button" class="btn btn--ghost" id="user-cancel">Cancelar</button>
+      <button type="submit" class="btn btn--accent">Guardar</button>
+    </div>
+  </form>
+</dialog>

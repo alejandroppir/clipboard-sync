@@ -1,33 +1,25 @@
 {
   "name": "clipboard-sync",
-  "version": "1.0.7",
-  "description": "Sincronizador de portapapeles",
-  "main": "dist/main/main.js",
-  "author": "",
-  "license": "ISC",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
   "scripts": {
-    "generate-icon": "node scripts/generate-icon.mjs",
-    "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json && node -e \"const fs=require('fs');fs.mkdirSync('dist/renderer',{recursive:true});fs.copyFileSync('src/renderer/settings.html','dist/renderer/settings.html');fs.copyFileSync('src/renderer/settings.css','dist/renderer/settings.css');fs.copyFileSync('src/renderer/splash.html','dist/renderer/splash.html');fs.copyFileSync('src/renderer/update.html','dist/renderer/update.html');\"",
-    "dev": "npm run build && electron .",
-    "package": "npm run build && electron-builder --win portable",
-    "release": "npm run build && electron-builder --win portable --publish always"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "tauri": "tauri",
+    "app": "tauri dev",
+    "package": "tauri build",
+    "icons": "tauri icon src/assets/logo.svg",
+    "admin-hash": "node scripts/admin-password-hash.mjs"
   },
   "dependencies": {
-    "adm-zip": "^0.5.18",
-    "date-fns": "^4.1.0",
-    "date-fns-tz": "^3.2.0",
-    "electron-updater": "^6.8.3",
-    "firebase": "^9.22.2"
+    "@tauri-apps/api": "^2"
   },
   "devDependencies": {
-    "@resvg/resvg-js": "^2.6.2",
-    "@types/adm-zip": "^0.5.8",
-    "@types/node": "^25.6.0",
-    "electron": "^41.5.0",
-    "electron-builder": "^26.8.1",
-    "png-to-ico": "^3.0.1",
-    "rcedit": "^5.0.2",
-    "sharp": "^0.34.5",
-    "typescript": "^6.0.3"
+    "@tauri-apps/cli": "^2",
+    "sass-embedded": "^1.108.1",
+    "typescript": "~6.0.3",
+    "vite": "^8.0.16",
+    "vite-plugin-handlebars": "^2.0.3"
   }
 }

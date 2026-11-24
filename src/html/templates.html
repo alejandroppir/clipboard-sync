@@ -1,0 +1,61 @@
+<template id="log-entry-template">
+  <li class="log-entry hstack gap-3">
+    <svg class="icon log-entry__icon" aria-hidden="true"><use /></svg>
+    <span class="log-entry__message grow"></span>
+    <time class="log-entry__time"></time>
+  </li>
+</template>
+
+<template id="history-item-template">
+  <li class="list-item hstack gap-3">
+    <div class="vstack gap-0 grow">
+      <span class="history__text"></span>
+      <span class="list-item__meta small muted"></span>
+    </div>
+    <button type="button" class="icon-btn" data-action="copy" aria-label="Copiar de nuevo" title="Copiar de nuevo">
+      <svg class="icon" aria-hidden="true"><use href="#icon-copy" /></svg>
+    </button>
+  </li>
+</template>
+
+<template id="user-row-template">
+  <li class="list-item hstack gap-3">
+    <span class="avatar" aria-hidden="true"></span>
+    <div class="vstack gap-0 grow">
+      <span class="list-item__title"></span>
+      <span class="list-item__meta small muted"></span>
+      <span class="user-row__usage small muted"></span>
+    </div>
+    <button type="button" class="icon-btn" data-action="copy" aria-label="Copiar identificador">
+      <svg class="icon" aria-hidden="true"><use href="#icon-copy" /></svg>
+    </button>
+  </li>
+</template>
+
+<template id="error-row-template">
+  <li class="list-item hstack gap-3">
+    <div class="vstack gap-1 grow">
+      <span class="list-item__title"></span>
+      <span class="list-item__meta small muted"></span>
+      <span class="error-row__trace"></span>
+    </div>
+    <button type="button" class="icon-btn" data-action="copy" aria-label="Copiar el error" title="Copiar el error">
+      <svg class="icon" aria-hidden="true"><use href="#icon-copy" /></svg>
+    </button>
+  </li>
+</template>
+
+<template id="message-row-template">
+  <li class="list-item hstack">
+    <div class="vstack gap-0 grow">
+      <span class="list-item__title hstack"><span class="list-item__name"></span><span class="chip chip--sm"></span></span>
+      <span class="list-item__meta small muted"></span>
+    </div>
+    <button type="button" class="icon-btn" data-action="edit" aria-label="Editar mensaje">
+      <svg class="icon" aria-hidden="true"><use href="#icon-edit" /></svg>
+    </button>
+    <button type="button" class="icon-btn icon-btn--danger" data-action="delete" aria-label="Borrar mensaje">
+      <svg class="icon" aria-hidden="true"><use href="#icon-delete" /></svg>
+    </button>
+  </li>
+</template>

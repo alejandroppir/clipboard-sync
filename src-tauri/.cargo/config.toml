@@ -1,0 +1,3 @@
+# Build output in the project root (`target/`), next to `dist/`, instead of inside `src-tauri/`.
+[build]
+target-dir = "../target"

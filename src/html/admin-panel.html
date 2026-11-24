@@ -1,0 +1,69 @@
+<dialog class="dialog" id="admin-login" aria-labelledby="admin-login-title">
+  <form class="dialog__body vstack gap-4" id="admin-login-form" method="dialog">
+    <h2 class="title" id="admin-login-title">Administración</h2>
+    <label class="field vstack gap-1">
+      <span class="field__label">Contraseña</span>
+      <input class="input" id="admin-password" type="password" autocomplete="off" required />
+      <span class="error small" id="admin-login-error" role="alert" hidden></span>
+    </label>
+    <div class="hstack end">
+      <button type="button" class="btn btn--ghost" id="admin-login-cancel">Cancelar</button>
+      <button type="submit" class="btn btn--accent">Entrar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="dialog dialog--wide" id="admin-panel" aria-labelledby="admin-panel-title">
+  <div class="dialog__body vstack gap-4">
+    <div class="hstack between">
+      <h2 class="title" id="admin-panel-title">Panel de administración</h2>
+      <button type="button" class="icon-btn" id="admin-close" aria-label="Cerrar panel">
+        <svg class="icon" aria-hidden="true"><use href="#icon-close" /></svg>
+      </button>
+    </div>
+
+    <p class="error small" id="admin-error" role="alert" hidden></p>
+
+    <div class="tabs hstack gap-1" role="tablist">
+      <button type="button" class="tabs__tab" role="tab" id="tab-users" aria-controls="panel-users" aria-selected="true">Usuarios</button>
+      <button type="button" class="tabs__tab" role="tab" id="tab-messages" aria-controls="panel-messages" aria-selected="false">Mensajes</button>
+      <button type="button" class="tabs__tab" role="tab" id="tab-errors" aria-controls="panel-errors" aria-selected="false">Errores</button>
+    </div>
+
+    <section class="dialog__scroll vstack gap-3" id="panel-users" role="tabpanel" aria-labelledby="tab-users">
+      <ul class="vstack gap-0" id="users-list"></ul>
+      <p class="empty" id="users-empty" hidden>No hay usuarios.</p>
+    </section>
+
+    <section class="dialog__scroll vstack gap-3" id="panel-messages" role="tabpanel" aria-labelledby="tab-messages" hidden>
+      <form class="composer vstack gap-3" id="message-form">
+        <label class="field vstack gap-1">
+          <span class="field__label">Destinatario</span>
+          <input class="input" id="message-target" type="text" placeholder="global o identificador de usuario" autocomplete="off" spellcheck="false" required />
+        </label>
+        <label class="field vstack gap-1">
+          <span class="field__label">Mensaje</span>
+          <textarea class="input input--area" id="message-text" rows="2" required></textarea>
+        </label>
+        <p class="error small" id="message-error" role="alert" hidden></p>
+        <div class="hstack end">
+          <button type="submit" class="btn btn--accent btn--sm" id="message-save">Guardar</button>
+        </div>
+      </form>
+      <ul class="vstack gap-0" id="messages-list"></ul>
+      <p class="empty" id="messages-empty" hidden>No hay mensajes.</p>
+    </section>
+
+    <section class="dialog__scroll vstack gap-3" id="panel-errors" role="tabpanel" aria-labelledby="tab-errors" hidden>
+      <div class="hstack between">
+        <span class="small muted" id="errors-count"></span>
+        <div class="hstack">
+          <button type="button" class="btn btn--ghost btn--sm" id="errors-refresh">Actualizar</button>
+          <button type="button" class="btn btn--ghost btn--sm btn--danger" id="errors-delete">Borrar estos errores</button>
+        </div>
+      </div>
+      <ul class="vstack gap-0" id="errors-list"></ul>
+      <p class="empty" id="errors-empty" hidden>No hay errores.</p>
+    </section>
+  </div>
+</dialog>
